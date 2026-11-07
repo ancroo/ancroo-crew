@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from "_copy.html" import copy_button with context %}
+{% block title %}{{ t("fb.title", name=c.name) }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › <a href="/team/{{ c.id }}#feedback">{{ c.name }}</a> › {{ t("fb.crumb", date=meeting | meeting) }}{% endblock %}
+
+{% block content %}
+<div class="card-head large">
+  <span class="avatar">{{ c.name[:1] }}</span>
+  <div>
+    <h1>{{ t("card.feedback") }}</h1>
+    <p class="subtitle">{{ c.name }} · {{ meeting | meeting }} · {% if decision %}{{ decision.strip().splitlines()[0] }}{% elif busy %}{{ t("fb.still_running") }}{% else %}{{ t("fb.waiting") }}{% endif %}</p>
+  </div>
+</div>
+
+<section class="panel">
+  <h2>{{ t("fb.evaluation_by", name=leader) }}</h2>
+  {% if brief %}<details><summary>{{ t("fb.your_brief") }}</summary><div class="text">{{ brief | markdown }}</div></details>{% endif %}
+  <div class="text" id="evaluation">{{ evaluation | markdown }}</div>
+  {% if evaluation.strip() %}<p class="buttons below">{{ copy_button(evaluation, "#evaluation") }}</p>{% endif %}
+</section>
+
+<section class="panel" id="decision">
+  <h2>{{ t("card.decision") if decision else t("fb.your_decision") }}</h2>
+  {% if decision %}
+  <div class="text">{{ decision | markdown }}</div>
+  <p class="buttons below">{{ copy_button(decision, "#decision .text") }}</p>
+  <p>{{ t("fb.files") }}</p>
+  <ul class="files">
+    {% for path in files | sort %}<li><a href="/team/{{ c.id }}/file?path={{ path | urlencode }}">{{ path.rsplit('/', 1)[1] }}</a></li>{% endfor %}
+  </ul>
+  {% elif busy %}
+  <p class="empty">{{ t("fb.busy", name=c.name) }}</p>
+  {% else %}
+  {% if proposal %}
+  {% for p in proposal.parts %}
+  <div class="proposal" data-part="{{ p.part }}">
+  <h3 class="sub">{{ t("part." ~ p.part) | capitalize }}</h3>
+  <p>{{ t("fb.words") }} {{ p.words_before }} → <strong class="words">{{ p.words }}</strong>{% if p.words > p.limit %} <span class="error">· {{ t("fb.over_limit", limit=p.limit) }}</span>{% endif %}</p>
+  {% if p.header_changed %}<p class="error">{{ t("fb.header_changed", name=leader) }}</p>{% endif %}
+  <details>
+    <summary>{{ t("fb.changes") }}</summary>
+    <p class="small">{{ t("fb.changes_hint") }}</p>
+    <pre class="diff">{{ p.diff | diff }}</pre>
+  </details>
+  <details>
+    <summary>{{ t("fb.adapt") }}</summary>
+    <div class="form">
+      <textarea rows="20" spellcheck="false" aria-label="{{ t("fb.new_version") }}">
+{{ p.text }}</textarea>
+      <p class="buttons"><button class="button recompute" type="button">{{ t("fb.recompute") }}</button></p>
+    </div>
+  </details>
+  </div>
+  {% endfor %}
+  {% else %}
+  <p>{{ t("fb.no_change") }}</p>
+  {% endif %}
+  <p class="buttons below">
+    <button class="button primary" id="accept" data-version="{{ proposal.version if proposal else "" }}">{{ t("fb.accept") }}</button>
+    <button class="button" id="reject">{{ t("fb.reject") }}</button>
+  </p>
+  <p class="small">{{ t("fb.accept_hint_profile" if proposal else "fb.accept_hint_no_profile") }} {{ t("fb.decision_hint") }}</p>
+  {% endif %}
+</section>
+
+<script>
+// Colour the lines of a diff: what is added, what is removed, and the locations.
+function colour(field, text) {
+  field.replaceChildren(...text.split("\n").map(line => {
+    const part = document.createElement("span");
+    part.textContent = line + "\n";
+    if (/^(\+\+\+|---|@@)/.test(line)) part.className = "loc";
+    else if (line.startsWith("+")) part.className = "add";
+    else if (line.startsWith("-")) part.className = "del";
+    return part;
+  }));
+}
+// One proposal per part of the profile: the difference is recomputed from the edited text.
+const proposals = [...document.querySelectorAll(".proposal")];
+for (const proposal of proposals) {
+  proposal.querySelector(".recompute").addEventListener("click", async () => {
+    const response = await fetch(location.pathname + "/diff", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text: proposal.querySelector("textarea").value, part: proposal.dataset.part})});
+    const data = await response.json();
+    if (!response.ok) return alert(data.detail);
+    colour(proposal.querySelector(".diff"), data.diff || {{ t("fb.no_difference") | tojson }});
+    proposal.querySelector(".words").textContent = data.words;
+  });
+}
+
+async function decide(accept, question) {
+  if (!confirm(question)) return;
+  const button = document.getElementById("accept");
+  const texts = Object.fromEntries(proposals.map(p => [p.dataset.part, p.querySelector("textarea").value]));
+  const data = {accept, version: button.dataset.version || null, texts: proposals.length ? texts : null};
+  const response = await fetch(location.pathname + "/decision", {
+    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
+  const result = await response.json();
+  if (!response.ok) return alert(result.detail);
+  if (result.hint) alert(result.hint);
+  location.href = "/team/{{ c.id }}#feedback";
+}
+document.getElementById("accept")?.addEventListener("click", () => decide(true, {{ t("fb.accept_question") | tojson }}));
+document.getElementById("reject")?.addEventListener("click", () => decide(false, {{ t("fb.reject_question") | tojson }}));
+</script>
+{% endblock %}

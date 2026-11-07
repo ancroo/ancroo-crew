@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ t("nav.settings") }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ t("nav.settings") }}{% endblock %}
+
+{% block content %}
+<section class="panel" id="name">
+  <h2>{{ t("settings.name") }}</h2>
+  <form class="form" id="name-form">
+    <label for="company-name">{{ t("settings.name") }}</label>
+    <input id="company-name" value="{{ company_name }}" required autocomplete="organization">
+    <p class="buttons"><button class="button primary">{{ t("common.save") }}</button></p>
+  </form>
+  <p class="small">{{ t("settings.name_hint") }}</p>
+</section>
+
+<section class="panel" id="claim">
+  <h2>{{ t("settings.claim") }}</h2>
+  <form class="form" id="claim-form">
+    <label for="company-claim">{{ t("settings.claim") }}</label>
+    <input id="company-claim" value="{{ claim }}" maxlength="{{ claim_length }}">
+    <p class="buttons"><button class="button primary">{{ t("common.save") }}</button></p>
+  </form>
+  <p class="small">{{ t("settings.claim_hint", size=claim_length) }}</p>
+</section>
+
+<section class="panel" id="logo">
+  <h2>{{ t("settings.logo") }}</h2>
+  {% if logo_version %}
+  <img class="logo-preview" src="/logo?v={{ logo_version }}" alt="{{ t("settings.logo") }}">
+  {% else %}
+  <p class="empty">{{ t("settings.logo_none") }}</p>
+  {% endif %}
+  <form class="form" id="logo-form">
+    <label for="logo-file">{{ t("settings.logo_file") }}</label>
+    <input id="logo-file" type="file" accept="image/png,image/jpeg,image/webp" required>
+    <p class="buttons">
+      <button class="button primary">{{ t("settings.logo_upload") }}</button>
+      {% if logo_version %}<button class="button" type="button" id="logo-remove">{{ t("settings.logo_remove") }}</button>{% endif %}
+    </p>
+  </form>
+  <p class="small">{{ t("settings.logo_hint", size=logo_kb) }}</p>
+</section>
+
+<section class="panel">
+  <h2>{{ t("settings.software") }}</h2>
+  <p class="small">{{ t("settings.software_hint") }}</p>
+</section>
+
+<script>
+async function post(path, data) {
+  const response = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
+  const result = await response.json();
+  if (!response.ok) { alert(result.detail); return null; }
+  if (result.hint) alert(result.hint);
+  return result;
+}
+document.getElementById("name-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (await post("/settings/name", {name: document.getElementById("company-name").value})) location.reload();
+});
+document.getElementById("claim-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (await post("/settings/claim", {claim: document.getElementById("company-claim").value})) location.reload();
+});
+document.getElementById("logo-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const reader = new FileReader();
+  // A data URL is "data:<type>;base64,<data>"; the server wants only the data.
+  reader.addEventListener("load", async () => {
+    if (await post("/settings/logo", {data: reader.result.split(",", 2)[1] || ""})) location.reload();
+  });
+  reader.readAsDataURL(document.getElementById("logo-file").files[0]);
+});
+const remove = document.getElementById("logo-remove");
+if (remove) remove.addEventListener("click", async () => {
+  if (!confirm({{ t("settings.logo_remove_question") | tojson }})) return;
+  if (await post("/settings/logo/delete", {})) location.reload();
+});
+</script>
+{% endblock %}

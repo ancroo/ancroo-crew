@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ t("setup.title") }}{% endblock %}
+
+{% block content %}
+<section class="panel narrow">
+  <h2>{{ t("setup.title") }}</h2>
+  <p class="small">{{ t("setup.intro") }}</p>
+  <form class="form" id="setup">
+    <label for="language">{{ t("setup.language") }}</label>
+    <select id="language">{% for l in languages %}<option value="{{ l }}"{{ " selected" if l == lang }}>{{ t("lang." ~ l) }}</option>{% endfor %}</select>
+    <label for="company">{{ t("setup.company") }}</label>
+    <input id="company" required maxlength="60">
+    <label for="name">{{ t("setup.name") }}</label>
+    <input id="name" required maxlength="40" autocomplete="name">
+    <label for="display">{{ t("setup.display_name") }}</label>
+    <input id="display" maxlength="40">
+    <label for="password">{{ t("person.new_password", n=min_length) }}</label>
+    <input id="password" type="password" autocomplete="new-password" minlength="{{ min_length }}" required>
+    <p class="error" id="notice" hidden></p>
+    <p class="buttons"><button class="button primary">{{ t("setup.button") }}</button></p>
+  </form>
+  <p class="small">{{ t("setup.after") }}</p>
+</section>
+<script>
+const value = id => document.getElementById(id).value;
+// The page follows the chosen language.
+document.getElementById("language").addEventListener("change", e => {
+  location.search = "?lang=" + e.target.value;
+});
+document.getElementById("setup").addEventListener("submit", async e => {
+  e.preventDefault();
+  const response = await fetch("/setup", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({language: value("language"), company_name: value("company"), name: value("name"),
+                          display_name: value("display"), password: value("password")})});
+  if (response.ok) return location.href = "/services";
+  const notice = document.getElementById("notice");
+  notice.textContent = (await response.json()).detail;
+  notice.hidden = false;
+});
+</script>
+{% endblock %}

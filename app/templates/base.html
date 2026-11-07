@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#181b21" media="(prefers-color-scheme: dark)">
+  <title>{% block title %}{{ t("nav.team") }}{% endblock %} · {{ company_name ~ " · Ancroo Crew" if company_name else "Ancroo Crew" }}</title>
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/icon-16.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/static/icons/icon-48.png">
+  <link rel="apple-touch-icon" href="/static/icons/icon-128.png">
+  <link rel="stylesheet" href="/static/style.css?v={{ style_version }}">
+</head>
+<body>
+  <header class="topbar">
+    {# The software stays as it is; the company comes beside it. #}
+    <a class="brand" href="/" aria-label="{{ company_name ~ ' · Ancroo Crew' if company_name else 'Ancroo Crew' }}">
+      <img src="/static/icons/icon-128.png" alt="" width="36" height="36">
+      <span class="wordmark">
+        <span class="wordmark-name">Ancroo</span>
+        <span class="wordmark-sub">Crew</span>
+      </span>
+      {% if company_name %}<span class="firm">
+        {% if logo_version %}<img class="logo" src="/logo?v={{ logo_version }}" alt="">{% endif %}
+        <span class="firm-text">
+          <span class="firm-name">{{ company_name }}</span>
+          {% if claim %}<span class="firm-claim">{{ claim }}</span>{% endif %}
+        </span>
+      </span>{% endif %}
+    </a>
+    <nav>{% block crumbs %}{% endblock %}</nav>
+    {% if me %}<span class="right menu">
+      <a href="/notices">{{ t("nav.notices") }}{% if unread %} <span class="badge active" aria-label="{{ tn("notices.unread", unread) }}">{{ unread }}</span>{% endif %}</a>
+      <a href="/people/{{ me.id }}">{{ me.display_name }}</a>
+      <button class="button" id="logout">{{ t("nav.logout") }}</button>
+    </span>
+    <script>document.getElementById("logout").addEventListener("click", async () => {
+      await fetch("/logout", {method: "POST"});
+      location.href = "/login";
+    });</script>{% endif %}
+  </header>
+  <main class="{% block main_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+  <script>
+// Copies the Markdown source as plain text (for the editor) and the rendered page as HTML (for
+// Word or mail). Uses the copy event because the Clipboard API needs HTTPS.
+document.querySelectorAll("[data-copy]").forEach(button => button.addEventListener("click", () => {
+  const html = document.querySelector(button.dataset.copyHtml)?.innerHTML;
+  const fill = e => {
+    e.clipboardData.setData("text/plain", button.dataset.copy);
+    if (html) e.clipboardData.setData("text/html", html);
+    e.preventDefault();
+  };
+  document.addEventListener("copy", fill);
+  const copied = document.execCommand("copy");
+  document.removeEventListener("copy", fill);
+  if (!copied) return;
+  const label = button.textContent;
+  button.textContent = button.dataset.done;
+  setTimeout(() => button.textContent = label, 1500);
+}));
+  </script>
+</body>
+</html>

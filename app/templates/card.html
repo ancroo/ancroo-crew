@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% from "_copy.html" import copy_button with context %}
+{% block title %}{{ c.name }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ c.name }}{% endblock %}
+
+{% macro progress_list(id, items) %}
+<dl class="facts wide" id="progress" data-job="{{ id }}">
+  {% for who, what in items %}<dt>{{ who }}</dt><dd>{{ what }}</dd>{% endfor %}
+</dl>
+{% endmacro %}
+
+{% macro reviewer_choice() %}
+{% if reviewers %}
+<p class="days" id="reviewers">{% for r in reviewers %}<label class="choice"><input type="checkbox" value="{{ r.id }}" checked> {{ r.name }}{% if r.title %} ({{ r.title }}){% endif %}</label>{% endfor %}</p>
+{% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="card-head large">
+  <span class="avatar">{{ c.name[:1] }}</span>
+  <div>
+    <h1>{{ c.name }}</h1>
+    <p class="subtitle">{{ c.title }}</p>
+  </div>
+  {% if not c.candidate %}<a class="button primary right" href="/chat/{{ c.id }}">{{ t("team.chat") }}</a>{% endif %}
+</div>
+
+<section class="panel">
+  <dl class="facts wide">
+    {% if c.candidate %}<dt>{{ t("card.status") }}</dt><dd>{{ t("status.candidate") }}</dd>{% endif %}
+    <dt>{{ t("card.roles") }}</dt><dd>{% for r in c.roles %}{{ t("role." ~ r) }}{{ ", " if not loop.last }}{% else %}–{% endfor %}</dd>
+    {% if c.hired %}<dt>{{ t("card.hired") }}</dt><dd>{{ c.hired | meeting }}</dd>{% endif %}
+    <dt>{{ t("card.model") }}</dt><dd>{{ c.model or t("card.default_model") }}</dd>
+    <dt>{{ t("card.tools") }}</dt><dd>{% for w in c.tools %}<code>{{ w }}</code> {% else %}–{% endfor %}</dd>
+    <dt>{{ t("card.services") }}</dt><dd>{% for e in c.services %}<code>{{ e }}</code> {% else %}–{% endfor %}</dd>
+    {% if not c.candidate %}<dt>{{ t("card.self_edit") }}</dt><dd>{{ t("card.self_edit_yes") if c.self_edit else t("card.self_edit_no") }}</dd>{% endif %}
+    <dt>{{ t("card.id") }}</dt><dd><code>{{ c.id }}</code></dd>
+  </dl>
+  <details class="below">
+    <summary>{{ t("card.change_header") }}</summary>
+    <form class="form" id="header">
+      <label for="header-name">{{ t("card.name") }}</label>
+      <input id="header-name" data-field="name" value="{{ c.name }}" required maxlength="40">
+      <label for="header-title">{{ t("card.title") }}</label>
+      <input id="header-title" data-field="title" value="{{ c.title }}" required>
+      <label for="header-model">{{ t("card.model") }}</label>
+      <select id="header-model" data-field="model">
+        {% for m in models %}<option value="{{ m }}"{{ " selected" if m == c.model }}>{{ m or t("card.default_model") }}</option>{% endfor %}
+        {% if c.model not in models %}<option value="{{ c.model }}" selected>{{ c.model }}</option>{% endif %}
+      </select>
+      <label for="header-tools">{{ t("card.tools_comma") }}</label>
+      <input id="header-tools" data-field="tools" value="{{ c.tools | join(",") }}" placeholder="WebSearch,WebFetch" autocomplete="off" spellcheck="false">
+      <label for="header-services">{{ t("card.services_comma") }}</label>
+      <input id="header-services" data-field="services" value="{{ c.services | join(",") }}" placeholder="{{ t("card.services_placeholder") }}" autocomplete="off" spellcheck="false">
+      {% if not c.candidate %}
+      <fieldset class="roles">
+        <legend>{{ t("card.roles") }}</legend>
+        {% for r in all_roles %}<label class="choice"><input type="checkbox" data-role="{{ r }}"{{ " checked" if r in c.roles }}> {{ t("role." ~ r) }}</label>{% endfor %}
+      </fieldset>
+      <label class="choice"><input type="checkbox" id="header-self-edit"{{ " checked" if c.self_edit }}> {{ t("card.self_edit_label", name=c.name) }}</label>
+      {% endif %}
+      <p class="buttons"><button class="button primary">{{ t("common.save") }}</button></p>
+    </form>
+    <p class="small">{{ t("card.header_hint") }}</p>
+  </details>
+</section>
+
+{% if c.candidate %}
+<section class="panel" id="hiring">
+  <h2>{{ t("card.hiring") }}</h2>
+  <p>{{ t("card.candidate_text", name=c.name) }}</p>
+  <p class="buttons">
+    <button class="button primary" id="hire" data-question="{{ t("card.hire_question", name=c.name) }}">{{ t("card.hire") }}</button>
+    <button class="button" id="dismiss" data-question="{{ t("card.discard_question", name=c.name) }}">{{ t("card.discard") }}</button>
+  </p>
+  <p class="small">{{ t("card.candidate_hint", name=c.name) }}</p>
+</section>
+{% endif %}
+
+{% if requests %}
+<section class="panel" id="approvals">
+  <h2>{{ t("card.requests") }}</h2>
+  <table class="list">
+    <tr><th>{{ t("card.tool") }}</th><th>{{ t("card.last_needed") }}</th><th>{{ t("card.how_often") }}</th><th></th></tr>
+    {% for r in requests %}
+    <tr>
+      <td><code>{{ r.tool }}</code></td>
+      <td data-label="{{ t("card.last_needed") }}">{{ r.last | datetime }}{% if r.conversation_id %} · <a href="/conversation/{{ r.conversation_id }}">{{ t("card.conversation") }}</a>{% endif %}</td>
+      <td data-label="{{ t("card.how_often") }}">{{ r.count }}</td>
+      <td class="buttons">
+        <button class="button primary" data-request="{{ r.id }}" data-decision="grant">{{ t("card.grant") }}</button>
+        <button class="button" data-request="{{ r.id }}" data-decision="deny">{{ t("card.deny") }}</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  <p class="small">{{ t("card.requests_hint", name=c.name) }}</p>
+</section>
+{% endif %}
+
+<section class="panel" id="profile">
+  <h2>{{ t("card.profile") }}</h2>
+  {% for p in parts %}{% set key = "core" if loop.first else "work" %}
+  <h3 class="sub" id="{{ key }}">{{ t("part." ~ p.part) | capitalize }}</h3>
+  {% if p.text %}
+  <details>
+    <summary>{{ t("card.read_part", words=p.words) }}{% if p.words > p.limit %}{{ t("card.too_long", limit=p.limit) }}{% endif %})</summary>
+    <div class="text" id="text-{{ key }}">{{ p.text | markdown }}</div>
+  </details>
+  {% else %}<p class="empty">{{ t("card.part_empty") }}</p>{% endif %}
+  <p class="buttons below"><a class="button" href="/team/{{ c.id }}/edit?path={{ p.part }}">{{ t("common.edit") }}</a>
+    {% if p.text %}{{ copy_button(p.text, "#text-" ~ key) }}{% endif %}</p>
+  {% if p.versions %}
+  <details class="below" id="versions-{{ key }}">
+    <summary>{{ t("card.versions", n=p.versions | length) }}</summary>
+    <table class="list">
+      <tr><th>{{ t("card.when") }}</th><th>{{ t("card.occasion") }}</th></tr>
+      {% for v in p.versions %}
+      <tr>
+        <td><a href="/team/{{ c.id }}/profile/{{ v.commit }}?part={{ p.part }}">{{ v.when }}</a></td>
+        <td data-label="{{ t("card.occasion") }}">{{ v.subject }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </details>
+  {% endif %}
+  {% endfor %}
+  <p class="small">{{ t("card.parts_hint", core=config.PROFILE_WORDS, work=config.WORK_WORDS) }} {% if not c.candidate %}{{ t("card.profile_hint_yes" if c.self_edit else "card.profile_hint_no", name=c.name) }} {% endif %}{{ t("card.versions_hint", name=c.name) }}</p>
+</section>
+
+<section class="panel" id="agreement">
+  <h2>{{ t("card.agreement") }}</h2>
+  {% if agreement.strip() %}<div class="text">{{ agreement | markdown }}</div>{% else %}<p class="empty">{{ t("card.agreement_empty") }}</p>{% endif %}
+  <p class="buttons below"><a class="button" href="/team/{{ c.id }}/edit?path={{ agreement_path | urlencode }}">{{ t("common.edit") }}</a></p>
+  <p class="small">{{ t("card.agreement_hint", name=c.name) }}</p>
+</section>
+
+{% if not c.candidate %}
+<section class="panel" id="feedback">
+  <h2>{{ t("card.feedback") }}</h2>
+  {% if running %}
+  <p>{{ t("card.assessment_since" if running.kind == "assessment" else "card.feedback_since", time=running.started | clock) }}</p>
+  {{ progress_list(running.id, running_progress) }}
+  {% else %}
+  {% if feedback_job and feedback_job.error %}
+  <p class="error">{% if feedback_job.status == "failed" %}{{ t("card.feedback_failed", when=feedback_job.started | datetime) }} {% endif %}{{ feedback_job.error }}</p>
+  {% endif %}
+  {% if c.feedback.open %}
+  <p>{{ t("card.evaluation_ready", date=c.feedback.open | meeting) }}</p>
+  <p class="buttons"><a class="button primary" href="/team/{{ c.id }}/feedback/{{ c.feedback.open }}">{{ t("card.view_and_decide") }}</a></p>
+  {% elif not leader %}
+  <p class="empty">{{ t("card.no_leader", name=c.name) }}</p>
+  {% else %}
+  <p>{{ t("card.last_feedback", date=c.feedback.last | meeting if c.feedback.last else t("card.none_yet")) }}</p>
+  <form class="form" id="feedback-start">
+    <label for="brief">{{ t("card.brief_label", name=leader) }}</label>
+    <textarea id="brief" rows="3" placeholder="{{ t("card.brief_placeholder") }}"></textarea>
+    <p class="buttons"><button class="button primary">{{ t("card.start_feedback") }}</button></p>
+  </form>
+  <p class="small">{{ t("card.feedback_hint", name=leader) }}{% if "hr" in c.roles %} {{ t("card.feedback_hr_hint", name=c.name, leader=leader) }}{% endif %}</p>
+  {% endif %}
+  {% if meetings %}
+  <table class="list">
+    <tr><th>{{ t("card.meeting") }}</th><th>{{ t("card.decision") }}</th></tr>
+    {% for m in meetings %}
+    <tr>
+      <td><a href="/team/{{ c.id }}/feedback/{{ m.meeting }}">{{ m.meeting | meeting }}</a></td>
+      <td data-label="{{ t("card.decision") }}">{{ m.decision or t("card.open") }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <h3 class="sub">{{ t("card.assessment") }}</h3>
+  {% if not c.assessed and (c.services or c.tools) %}<p>{{ t("card.not_assessed", name=c.name) }}</p>{% endif %}
+  {% if job and job.error %}
+  <p class="error">{% if job.status == "failed" %}{{ t("card.assessment_failed", when=job.started | datetime) }} {% endif %}{{ job.error }}</p>
+  {% endif %}
+  {% if reports %}
+  <p>{{ t("card.reports_latest_employee") }}</p>
+  <ul class="files">
+    {% for path in reports %}<li><a href="/team/{{ c.id }}/file?path={{ path | urlencode }}">{{ path.split('/', 1)[1] }}</a></li>{% endfor %}
+  </ul>
+  {% endif %}
+  {{ reviewer_choice() }}
+  <p class="buttons"><button class="button" id="assessment">{{ t("card.review_again") if reports else t("card.start_assessment") }}</button></p>
+  <p class="small">{{ t("card.assessment_employee_hint", n=config.PROBES, name=c.name) }}</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel" id="conversations">
+  <h2>{{ t("card.conversations") }}</h2>
+  {% if conversations %}
+  {% include "_conversations.html" %}
+  {% if all_conversations > conversations | length %}
+  <p class="small"><a href="/team/{{ c.id }}/conversations">{{ t("card.all_conversations", n=all_conversations) }}</a></p>
+  {% endif %}
+  {% else %}
+  <p class="empty">{{ t("card.no_conversations") }}</p>
+  {% endif %}
+</section>
+
+{% if not c.candidate %}
+<section class="panel" id="schedules">
+  <h2>{{ t("card.schedules") }}</h2>
+  {% if schedules %}
+  <table class="list">
+    <tr><th>{{ t("card.when") }}</th><th>{{ t("card.task") }}</th><th>{{ t("card.last_run") }}</th><th></th></tr>
+    {% for s in schedules %}
+    <tr>
+      <td>{{ s.time }} · {{ s.days_text }}{% if s.paused %} <span class="badge warn">{{ t("card.paused") }}</span>{% endif %}</td>
+      <td data-label="{{ t("card.task") }}">{{ s.text }}</td>
+      <td data-label="{{ t("card.last_run") }}">{{ (s.last_run | meeting) if s.last_run else "–" }}{% if s.error %} <span class="error">{{ s.error }}</span>{% endif %}</td>
+      <td class="buttons">
+        <button class="button primary" data-run="{{ s.id }}">{{ t("card.run_now") }}</button>
+        <button class="button" data-pause="{{ s.id }}" data-paused="{{ "false" if s.paused else "true" }}">{{ t("card.resume" if s.paused else "card.pause") }}</button>
+        <button class="button" data-schedule="{{ s.id }}">{{ t("common.delete") }}</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="empty">{{ t("card.no_schedules", name=c.name) }}</p>
+  {% endif %}
+  <details class="below">
+    <summary>{{ t("card.new_schedule") }}</summary>
+    <form class="form" id="schedule">
+      <label for="schedule-text">{{ t("card.schedule_what", name=c.name) }}</label>
+      <textarea id="schedule-text" rows="3" required placeholder="{{ t("card.schedule_placeholder") }}"></textarea>
+      <label for="schedule-time">{{ t("card.time") }}</label>
+      <input id="schedule-time" type="time" value="07:00" required>
+      <p class="days">{% for day in weekdays %}<label class="choice"><input type="checkbox" value="{{ loop.index0 }}"{{ " checked" if loop.index0 < 5 }}> {{ day }}</label>{% endfor %}</p>
+      <p class="buttons"><button class="button primary">{{ t("common.create") }}</button></p>
+    </form>
+  </details>
+  <p class="small">{{ t("card.schedule_hint", name=c.name) }}</p>
+</section>
+{% endif %}
+
+<section class="panel" id="files">
+  <h2>{{ t("card.files") }}</h2>
+  <form class="search" action="/search">
+    <input type="search" name="q" minlength="3" required placeholder="{{ t("search.placeholder") }}" aria-label="{{ t("search.label") }}">
+    <button class="button">{{ t("search.button") }}</button>
+  </form>
+  {% for name, items in folders.items() %}
+  <details>
+    <summary>{{ t("folder." ~ name) }} ({{ items | length }})</summary>
+    {% if items %}
+    <ul class="files">
+      {% for path in items %}<li><a href="/team/{{ c.id }}/file?path={{ path | urlencode }}">{{ path.split('/', 1)[1] }}</a></li>{% endfor %}
+    </ul>
+    {% else %}<p class="empty">{{ t("card.nothing_stored") }}</p>{% endif %}
+  </details>
+  {% endfor %}
+  <details id="edits">
+    <summary>{{ t("card.your_edits", n=edits | length) }}</summary>
+    {% if edits %}
+    <table class="list">
+      <tr><th>{{ t("card.when") }}</th><th>{{ t("card.file") }}</th><th>{{ t("card.kind") }}</th><th>{{ t("card.who") }}</th><th>{{ t("card.reason") }}</th></tr>
+      {% for e in edits %}
+      <tr>
+        <td>{{ e.when }}</td>
+        <td data-label="{{ t("card.file") }}"><a href="/team/{{ c.id }}/file?path={{ e.path | urlencode }}">{{ e.path }}</a></td>
+        <td data-label="{{ t("card.kind") }}">{{ t("edit.kind." ~ e.kind) }}</td>
+        <td data-label="{{ t("card.who") }}">{{ names.get(e.person, e.person) }}</td>
+        <td data-label="{{ t("card.reason") }}">{{ e.reason or "–" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}<p class="empty">{{ t("card.none") }}</p>{% endif %}
+    <p class="small">{{ t("card.edits_hint", name=c.name) }}</p>
+  </details>
+</section>
+
+{% if not c.candidate %}
+<section class="panel">
+  <h2>{{ t("card.dismiss") }}</h2>
+  <p class="small">{{ t("card.dismiss_hint", name=c.name) }}</p>
+  <p class="buttons"><button class="button" data-dismiss data-question="{{ t("card.dismiss_question", name=c.name) }}">{{ t("card.dismiss") }}</button></p>
+</section>
+{% endif %}
+
+<script>
+document.querySelectorAll("[data-request]").forEach(button => button.addEventListener("click", async () => {
+  const response = await fetch(`/approval/${button.dataset.request}/${button.dataset.decision}`, {method: "POST"});
+  const data = await response.json();
+  if (!response.ok) return alert(data.detail);
+  if (data.hint) alert(data.hint);
+  location.reload();
+}));
+
+async function post(path, content = {}) {
+  const response = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"},
+                                      body: JSON.stringify(content)});
+  const data = await response.json();
+  if (!response.ok) alert(data.detail);
+  else if (data.hint) alert(data.hint);
+  return response.ok;
+}
+document.getElementById("assessment")?.addEventListener("click", async e => {
+  const boxes = [...document.querySelectorAll("#reviewers input")];
+  e.target.disabled = true;
+  const chosen = boxes.length ? {reviewers: boxes.filter(box => box.checked).map(box => box.value)} : {};
+  if (await post("/team/{{ c.id }}/assessment", chosen)) location.reload();
+  else e.target.disabled = false;
+});
+document.getElementById("hire")?.addEventListener("click", async e => {
+  if (!confirm(e.target.dataset.question)) return;
+  if (await post("/team/{{ c.id }}/hire")) location.reload();
+});
+document.querySelectorAll("#dismiss, [data-dismiss]").forEach(button => button.addEventListener("click", async () => {
+  if (!confirm(button.dataset.question)) return;
+  if (await post("/team/{{ c.id }}/dismiss")) location.href = "/";
+}));
+document.getElementById("header").addEventListener("submit", async e => {
+  e.preventDefault();
+  const fields = Object.fromEntries([...e.target.querySelectorAll("[data-field]")].map(f => [f.dataset.field, f.value]));
+  const roles = [...e.target.querySelectorAll("[data-role]")];
+  if (roles.length) fields.roles = roles.filter(r => r.checked).map(r => r.dataset.role).join(",");
+  const selfEdit = document.getElementById("header-self-edit");
+  if (selfEdit) fields.self_edit = selfEdit.checked ? "yes" : "no";
+  if (await post("/team/{{ c.id }}/header", {fields})) location.reload();
+});
+document.getElementById("schedule")?.addEventListener("submit", async e => {
+  e.preventDefault();
+  const days = [...e.target.querySelectorAll(".days input:checked")].map(f => Number(f.value));
+  const data = {text: document.getElementById("schedule-text").value, time: document.getElementById("schedule-time").value, days};
+  if (await post("/team/{{ c.id }}/schedule", data)) { location.hash = "schedules"; location.reload(); }
+});
+document.querySelectorAll("[data-run]").forEach(button => button.addEventListener("click", async () => {
+  button.disabled = true;
+  const response = await fetch(`/schedule/${button.dataset.run}/run`, {method: "POST"});
+  const data = await response.json();
+  if (!response.ok) { button.disabled = false; return alert(data.detail); }
+  location.href = `/conversation/${data.conversation}`;
+}));
+document.querySelectorAll("[data-pause]").forEach(button => button.addEventListener("click", async () => {
+  if (await post(`/schedule/${button.dataset.pause}/pause`, {paused: button.dataset.paused === "true"})) {
+    location.hash = "schedules"; location.reload();
+  }
+}));
+document.querySelectorAll("[data-schedule]").forEach(button => button.addEventListener("click", async () => {
+  if (await post(`/schedule/${button.dataset.schedule}/delete`)) { location.hash = "schedules"; location.reload(); }
+}));
+document.getElementById("feedback-start")?.addEventListener("submit", async e => {
+  e.preventDefault();
+  e.target.querySelector("button").disabled = true;
+  await post("/team/{{ c.id }}/feedback", {brief: document.getElementById("brief").value});
+  location.hash = "feedback";
+  location.reload();
+});
+
+// Running job: reload the progress, show the page with the result at the end.
+const progress = document.getElementById("progress");
+if (progress) setInterval(async () => {
+  const response = await fetch(`/job/${progress.dataset.job}`);
+  if (!response.ok) return;
+  const data = await response.json();
+  if (data.status !== "running") return location.reload();
+  progress.replaceChildren(...data.progress.flatMap(([who, what]) => {
+    const dt = document.createElement("dt"), dd = document.createElement("dd");
+    dt.textContent = who;
+    dd.textContent = what;
+    return [dt, dd];
+  }));
+}, 3000);
+</script>
+{% endblock %}

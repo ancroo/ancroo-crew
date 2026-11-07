@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ t("edit.title", path=path) }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › <a href="{{ back }}">{{ back_name }}</a> › {{ t("edit.title", path=path) }}{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h2>{{ t("edit.heading_before") }} <code>{{ path }}</code> {{ t("edit.heading_after") }}</h2>
+  {% if c %}<p class="small">{{ t("edit.hint", name=c.name) }}{% if path == "profile.md" %} {{ t("edit.header_stays") }}{% endif %}</p>
+  {% elif path == "handbook.md" %}<p class="small">{{ t("edit.handbook_hint") }}</p>
+  {% else %}<p class="small">{{ t("edit.about_hint") }}</p>{% endif %}
+  <form id="edit" class="form" data-version="{{ version }}">
+    <textarea id="text" rows="24" spellcheck="false" aria-label="{{ t("edit.content_of", path=path) }}">
+{{ text }}</textarea>
+    {% if kinds %}
+    <label for="kind">{{ t("edit.kind") }}</label>
+    <select id="kind">
+      {% for kind in kinds %}<option value="{{ kind }}">{{ t("edit.kind." ~ kind) }}</option>{% endfor %}
+    </select>
+    <label for="reason">{{ t("edit.reason") }}</label>
+    <input id="reason" type="text" maxlength="300" autocomplete="off">
+    <p class="small">{{ t("edit.reason_hint", name=c.name) }}</p>
+    {% endif %}
+    <pre id="diff" class="diff" hidden></pre>
+    <p class="buttons">
+      <button class="button" type="button" id="show">{{ t("edit.show_diff") }}</button>
+      <button class="button primary" type="submit">{{ t("common.save") }}</button>
+      <a class="button" href="{{ back }}">{{ t("common.cancel") }}</a>
+    </p>
+  </form>
+</section>
+
+<script>
+const form = document.getElementById("edit");
+const field = name => document.getElementById(name);
+async function post(path, data) {
+  const response = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"},
+                                      body: JSON.stringify({path: {{ path | tojson }}, text: field("text").value, ...data})});
+  const result = await response.json();
+  if (!response.ok) alert(result.detail);
+  return response.ok ? result : null;
+}
+field("show").addEventListener("click", async () => {
+  const result = await post("{{ base }}/diff", {});
+  if (!result) return;
+  field("diff").textContent = result.diff || {{ t("edit.no_difference") | tojson }};
+  field("diff").hidden = false;
+});
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const extra = field("kind") ? {kind: field("kind").value, reason: field("reason").value} : {};
+  const result = await post("{{ base }}/edit", {version: form.dataset.version, ...extra});
+  if (!result) return;
+  if (result.hint) alert(result.hint);
+  location.href = {{ (back ~ ("#edits" if c else "")) | tojson }};
+});
+</script>
+{% endblock %}

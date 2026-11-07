@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_copy.html" import copy_button with context %}
+{% block title %}{{ t("archive.title", name=c.name) }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ t("archive.crumb", folder=folder) }}{% endblock %}
+
+{% block content %}
+<div class="card-head large">
+  <span class="avatar human">{{ c.name[:1] }}</span>
+  <div>
+    <h1>{{ c.name }}</h1>
+    <p class="subtitle">{{ c.title }} · {{ t("archive.since", date=folder[-10:] | meeting) }}</p>
+  </div>
+</div>
+
+<section class="panel">
+  <dl class="facts wide">
+    <dt>{{ t("archive.status") }}</dt><dd>{{ t("status.employee") if c.hired else t("status.candidate") }}</dd>
+    <dt>{{ t("card.hired") }}</dt><dd>{{ c.hired | meeting or "–" }}</dd>
+    <dt>{{ t("team.last_conversation") }}</dt><dd>{{ c.last_conversation | meeting or "–" }}</dd>
+    <dt>{{ t("card.model") }}</dt><dd>{{ c.model or t("card.default_model") }}</dd>
+  </dl>
+  <p class="buttons below"><button class="button" id="rehire" data-question="{{ t("archive.rehire_question", name=c.name) }}">{{ t("archive.rehire") }}</button></p>
+  <p class="small">{{ t("archive.rehire_hint", name=c.name) }}</p>
+</section>
+
+<section class="panel" id="profile">
+  <h2>{{ t("card.profile") }}</h2>
+  <div class="text">{{ profile | markdown }}</div>
+  {% if work %}<div class="text">{{ work | markdown }}</div>{% endif %}
+  <p class="buttons below">{{ copy_button(profile ~ ("\n\n" ~ work if work else ""), "#profile") }}</p>
+</section>
+
+<section class="panel">
+  <h2>{{ t("card.files") }}</h2>
+  {% for name, items in files.items() %}
+  <details>
+    <summary>{{ t("folder." ~ name) }} ({{ items | length }})</summary>
+    {% if items %}
+    <ul class="files">
+      {% for path in items %}<li><a href="/archive/{{ folder }}/file?path={{ path | urlencode }}">{{ path.split('/', 1)[1] }}</a></li>{% endfor %}
+    </ul>
+    {% else %}<p class="empty">{{ t("card.nothing_stored") }}</p>{% endif %}
+  </details>
+  {% endfor %}
+</section>
+
+<script>
+document.getElementById("rehire").addEventListener("click", async e => {
+  if (!confirm(e.target.dataset.question)) return;
+  const response = await fetch("/archive/{{ folder }}/rehire", {method: "POST"});
+  const data = await response.json();
+  if (!response.ok) return alert(data.detail);
+  if (data.hint) alert(data.hint);
+  location.href = `/team/${data.id}`;
+});
+</script>
+{% endblock %}

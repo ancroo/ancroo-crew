@@ -1,0 +1,19 @@
+{% if m.sender_kind == "tools" %}{% set parts = m.text.split("\n", 1) %}
+<details class="message tools" id="m-{{ m.id }}" data-id="{{ m.id }}">
+  <summary>{{ names.get(m.sender, m.sender) }} · {{ m.created | clock }} · {{ parts[0] }}</summary>
+  <div class="text">{{ parts[1] | markdown }}</div>
+</details>
+{% elif m.sender_kind == "profile" %}{% set change = profile_change(m.id) %}{% set state = change.state if change else "applied" %}
+<details class="message profile" id="m-{{ m.id }}" data-id="{{ m.id }}"{{ " open" if state == "proposed" }}>
+  <summary>{{ names.get(m.sender, m.sender) }} · {{ m.created | clock }} · {{ t("profile.note." ~ state, what=t("part." ~ (change.part if change else "profile.md"))) }}</summary>
+  <pre class="diff">{{ m.text | diff }}</pre>
+  {% if state == "applied" %}<p class="buttons"><button class="button" data-profile-change="{{ m.id }}" data-action="undo">{{ t("profile.undo") }}</button></p>
+  {% elif state == "proposed" %}<p class="buttons"><button class="button primary" data-profile-change="{{ m.id }}" data-action="accept">{{ t("profile.accept") }}</button> <button class="button" data-profile-change="{{ m.id }}" data-action="discard">{{ t("profile.discard") }}</button></p>{% endif %}
+</details>
+{% else %}
+<div class="message {{ m.sender_kind }}" id="m-{{ m.id }}" data-id="{{ m.id }}">
+  {% if m.sender_kind != "system" %}<p class="from">{{ names.get(m.sender, m.sender) }} · {{ m.created | clock }}</p>{% endif %}
+  {% if m.sender_kind == "human" %}<div class="text raw">{{ m.text | plain }}</div>
+  {% else %}<div class="text">{{ m.text | markdown }}</div>{% endif %}
+</div>
+{% endif %}

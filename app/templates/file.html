@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_copy.html" import copy_button with context %}
+{% block title %}{{ title }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › <a href="{{ back }}">{{ back_name }}</a> › {{ title }}{% endblock %}
+
+{% block content %}
+<section class="panel" id="file">
+  {% if content.strip() %}<div class="text">{{ content | markdown }}</div>{% else %}<p class="empty">{{ t("file.empty") }}</p>{% endif %}
+  {% if edit or content.strip() %}<p class="buttons below">
+    {% if edit %}<a class="button" href="{{ edit }}">{{ t("common.edit") }}</a>{% endif %}
+    {% if content.strip() %}{{ copy_button(content, "#file .text") }}{% endif %}</p>{% endif %}
+</section>
+{% endblock %}

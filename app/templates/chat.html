@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% set hiring = kind == "hiring" %}
+{% block title %}{{ t("chat.title_hiring" if hiring else "chat.title", name=c.name) }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › <a href="/team/{{ c.id }}">{{ c.name }}</a> › {% if fixed %}{{ t("chat.crumb_hiring_of" if hiring else "chat.crumb_of", when=conv.started | datetime) }}{% elif hiring %}{{ t("chat.crumb_hiring") }}{% else %}{{ t("team.chat") }}{% endif %}{% endblock %}
+{% block main_class %}chat-page{% endblock %}
+
+{% block content %}
+<div id="chat" data-id="{{ c.id }}" data-name="{{ c.name }}" data-conversation="{{ conv.id if conv else '' }}" data-kind="{{ kind }}"
+     data-state="{{ state.state }}" data-ends="{{ state.ends_at or '' }}">
+  <div id="thread" class="thread">
+    {% for m in messages %}{% include "_message.html" %}{% endfor %}
+    {% if not messages %}<p class="empty" id="empty">{% if hiring %}{{ t("chat.empty_hiring", name=c.name) }}{% else %}{{ t("chat.empty", name=c.name) }}{% endif %}</p>{% endif %}
+    <div class="message agent draft" id="draft" hidden>
+      <p class="from"><span id="draft-from">{{ c.name }}</span> <span id="tool"></span></p>
+      <div class="text raw" id="draft-text"></div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <span id="status"></span>
+    <span class="buttons">
+      <button class="button" id="stop" hidden>{{ t("chat.stop") }}</button>
+      <button class="button" id="pause" hidden>{{ t("chat.pause") }}</button>
+      <button class="button" id="resume" hidden>{{ t("chat.resume") }}</button>
+      <button class="button" id="end" hidden>{{ t("chat.end") }}</button>
+      <button class="button" id="reopen" hidden>{{ t("chat.reopen") }}</button>
+      <a class="button primary" id="new" href="{{ "/hiring?hr=" ~ c.id if hiring else "/chat/" ~ c.id }}" hidden>{{ t("chat.new_hiring" if hiring else "chat.new") }}</a>
+    </span>
+  </div>
+
+  <form id="composer" class="composer">
+    <textarea id="text" rows="2" placeholder="{{ t("chat.placeholder") }}" autofocus></textarea>
+    <span class="send">
+      {% if colleagues and not hiring %}
+      <select id="to" aria-label="{{ t("chat.to_label") }}" title="{{ t("chat.to_title") }}">
+        <option value="">{{ t("chat.to_employee", name=c.name) }}</option>
+        {% for colleague in colleagues %}<option value="{{ colleague.id }}" data-name="{{ colleague.name }}">{{ t("chat.bring_in", name=colleague.name) }}</option>{% endfor %}
+      </select>
+      {% endif %}
+      <button class="button primary" type="submit">{{ t("chat.send") }}</button>
+    </span>
+  </form>
+  <p class="small key-hint">{{ t("chat.key_hint") }}</p>
+</div>
+<script type="application/json" id="chat-texts">{{ {
+  "writing": t("chat.writing"), "paused": t("chat.paused"), "ending": t("chat.ending"), "ended": t("chat.ended"),
+  "ends_in": t("chat.ends_in"), "using": t("chat.using"), "send_failed": t("chat.send_failed"),
+  "reopen_failed": t("chat.reopen_failed")} | tojson }}</script>
+<script src="/static/chat.js?v={{ script_version }}"></script>
+{% endblock %}

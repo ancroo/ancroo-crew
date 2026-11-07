@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ t("hire.title") }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ t("hire.title") }}{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h2>{{ t("hire.title") }}</h2>
+  <p class="small">{{ t("hire.intro") }}{% if hr %} {{ t("hire.interview_hint") }} <a href="/hiring">{{ t("team.hire_interview") }}</a>{% endif %}</p>
+  <div class="cards">
+    {% for p in presets %}
+    <article class="card">
+      <div class="card-head">
+        <span class="avatar">{{ (p.name or p.title)[:1] }}</span>
+        <div>
+          <h3><a href="/hire?preset={{ p.key }}">{{ p.title }}</a></h3>
+          <p class="subtitle">{{ p.description }}</p>
+        </div>
+      </div>
+      <p class="badges">{% for r in p.roles.split(",") if r %}<span class="badge">{{ t("role." ~ r) }}</span>{% endfor %}</p>
+      <p class="buttons"><a class="button{{ " primary" if chosen and chosen.key == p.key }}" href="/hire?preset={{ p.key }}#form">{{ t("hire.choose") }}</a></p>
+    </article>
+    {% endfor %}
+    <article class="card">
+      <div class="card-head"><span class="avatar">+</span><div><h3><a href="/hire?preset=own#form">{{ t("hire.own") }}</a></h3><p class="subtitle">{{ t("hire.own_hint") }}</p></div></div>
+      <p class="buttons"><a class="button" href="/hire?preset=own#form">{{ t("hire.choose") }}</a></p>
+    </article>
+  </div>
+</section>
+
+{% set p = chosen or {"name": "", "title": "", "roles": "", "tools": "", "model": "", "core": "", "work": ""} %}
+{% if chosen or request.query_params.get("preset") == "own" %}
+<section class="panel" id="form">
+  <h2>{{ t("hire.form_title") }}</h2>
+  <form class="form" id="hire">
+    <label for="name">{{ t("card.name") }}</label>
+    <input id="name" data-field="name" value="{{ p.name }}" required maxlength="40">
+    <label for="title">{{ t("card.title") }}</label>
+    <input id="title" data-field="title" value="{{ p.title }}" required>
+    <label for="model">{{ t("card.model") }}</label>
+    <select id="model" data-field="model">{% for m in models %}<option value="{{ m }}"{{ " selected" if m == p.model }}>{{ m or t("card.default_model") }}</option>{% endfor %}</select>
+    <label for="tools">{{ t("card.tools_comma") }}</label>
+    <input id="tools" data-field="tools" value="{{ p.tools }}" placeholder="WebSearch,WebFetch" autocomplete="off" spellcheck="false">
+    <fieldset class="roles">
+      <legend>{{ t("card.roles") }}</legend>
+      {% for r in all_roles %}<label class="choice"><input type="checkbox" data-role="{{ r }}"{{ " checked" if r in p.roles.split(",") }}> {{ t("role." ~ r) }}</label>{% endfor %}
+    </fieldset>
+    <label for="text">{{ t("hire.profile_text") }}</label>
+    <textarea id="text" rows="10" spellcheck="false">
+{{ p.core }}</textarea>
+    <label for="work">{{ t("hire.work_text") }}</label>
+    <textarea id="work" rows="16" spellcheck="false">
+{{ p.work }}</textarea>
+    <p class="buttons"><button class="button primary">{{ t("hire.button") }}</button></p>
+  </form>
+  <p class="small">{{ t("hire.form_hint") }}</p>
+</section>
+<script>
+document.getElementById("hire").addEventListener("submit", async e => {
+  e.preventDefault();
+  const fields = Object.fromEntries([...e.target.querySelectorAll("[data-field]")].map(f => [f.dataset.field, f.value]));
+  fields.roles = [...e.target.querySelectorAll("[data-role]")].filter(r => r.checked).map(r => r.dataset.role).join(",");
+  const response = await fetch("/hire", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({fields, text: document.getElementById("text").value, work: document.getElementById("work").value})});
+  const data = await response.json();
+  if (!response.ok) return alert(data.detail);
+  if (data.hint) alert(data.hint);
+  location.href = `/team/${data.id}`;
+});
+</script>
+{% endif %}
+{% endblock %}

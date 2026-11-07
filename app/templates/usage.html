@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ t("nav.usage") }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ t("nav.usage") }}{% endblock %}
+
+{% macro shares(r) %}
+{# Composition of a row from the four token kinds, as a bar over the full width. #}
+<span class="shares" role="img" aria-label="{% for k in kinds %}{{ t("usage.kind." ~ k) }} {{ ((r[k] or 0) * 100 / r.total) | round | int if r.total else 0 }} %{{ ", " if not loop.last }}{% endfor %}">
+  {% for k in kinds if r[k] %}<span class="t-{{ k }}" style="flex-grow: {{ r[k] }}"></span>{% endfor %}
+</span>
+{% endmacro %}
+
+{% macro table(rows, columns) %}
+<table class="list usage">
+  <tr>{% for col in columns %}<th>{{ col }}</th>{% endfor %}<th class="num">{{ t("usage.runs") }}</th>
+    {% for k in kinds %}<th class="num">{{ t("usage.kind." ~ k) }}</th>{% endfor %}
+    <th class="num">{{ t("usage.total") }}</th><th class="num">{{ t("usage.api_value") }}</th><th>{{ t("usage.shares") }}</th></tr>
+  {% for r in rows %}
+  <tr>
+    {{ caller(r) }}
+    <td class="num" data-label="{{ t("usage.runs") }}">{{ r.runs | number }}</td>
+    {% for k in kinds %}<td class="num" data-label="{{ t("usage.kind." ~ k) }}" title="{{ r[k] | number }}">{{ r[k] | short }}</td>{% endfor %}
+    <td class="num" data-label="{{ t("usage.total") }}" title="{{ r.total | number }}"><strong>{{ r.total | short }}</strong></td>
+    <td class="num" data-label="{{ t("usage.api_value") }}">{{ r.cost | usd }}</td>
+    <td class="wide" data-label="{{ t("usage.shares") }}">{{ shares(r) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endmacro %}
+
+{% block content %}
+<section class="panel">
+  <h2>{{ t("usage.heading") }}</h2>
+  <p class="buttons">
+    {% for d, key in ((1, "usage.today"), (7, "usage.week"), (30, "usage.month"), (0, "usage.all")) %}
+    <a class="button{{ " primary" if d == days }}" href="/usage?days={{ d }}"{% if d == days %} aria-current="page"{% endif %}>{{ t(key) }}</a>
+    {% endfor %}
+  </p>
+
+  {% if not sums.runs %}
+  <p class="empty">{{ t("usage.none") }}</p>
+  {% else %}
+  <dl class="tiles">
+    <div><dt>{{ t("usage.runs") }}</dt><dd>{{ sums.runs | number }}</dd>{% if sums.failed %}<dd class="small">{{ t("usage.failed", n=sums.failed) }}</dd>{% endif %}</div>
+    <div><dt>{{ t("usage.tokens") }}</dt><dd title="{{ sums.total | number }}">{{ sums.total | short }}</dd>
+      <dd class="small">{{ t("usage.per_run", n=(sums.total / sums.runs) | short) }}</dd></div>
+    <div><dt>{{ t("usage.from_cache") }}</dt><dd>{{ ((sums.cache_read or 0) * 100 / sums.total) | round | int if sums.total else 0 }} %</dd>
+      <dd class="small">{{ t("usage.read", n=sums.cache_read | short) }}</dd></div>
+    <div><dt>{{ t("usage.kind.output") }}</dt><dd title="{{ sums.output | number }}">{{ sums.output | short }}</dd>
+      {% if sums.web_searches %}<dd class="small">{{ t("usage.searches", n=sums.web_searches | number) }}</dd>{% endif %}</div>
+    <div><dt>{{ t("usage.api_value") }}</dt><dd>{{ sums.cost | usd }}</dd></div>
+  </dl>
+  <p class="small">{{ t("usage.api_hint") }}</p>
+
+  <h3>{{ t("usage.per_day") }}</h3>
+  <p class="legend">{% for k in kinds %}<span><i class="t-{{ k }}"></i>{{ t("usage.kind." ~ k) }}</span>{% endfor %}</p>
+  <div class="columns" role="img" aria-label="{{ t("usage.chart_label") }}">
+    <span class="peak">{{ peak | short }}</span>
+    {% for d in history %}
+    <div class="day" title="{{ d.day | meeting }}: {{ d.total | number }} {{ t("usage.tokens") }}{% for k in kinds %}&#10;{{ t("usage.kind." ~ k) }}: {{ d[k] | number }}{% endfor %}&#10;{{ t("usage.api_value") }}: {{ d.cost | usd }}">
+      <div class="column" style="height: {{ (d.total * 100 / peak) if peak else 0 }}%">
+        {% for k in kinds if d[k] %}<span class="t-{{ k }}" style="flex-grow: {{ d[k] }}"></span>{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="axis"><span>{{ history[0].day | meeting }}</span><span>{{ history[-1].day | meeting }}</span></p>
+  {% endif %}
+</section>
+
+{% if sums.runs %}
+<section class="panel">
+  <h2>{{ t("usage.by_model") }}</h2>
+  {% call(r) table(model, [t("usage.model")]) %}<td><code>{{ r.model }}</code></td>{% endcall %}
+</section>
+
+<section class="panel">
+  <h2>{{ t("usage.by_prompt") }}</h2>
+  <p class="small">{{ t("usage.prompt_hint") }}</p>
+  {% call(r) table(prompt, [t("usage.purpose_procedure")]) %}<td>{{ t("usage.purpose." ~ r.purpose) }}<br><code>{{ r.procedure }}</code></td>{% endcall %}
+</section>
+
+<section class="panel">
+  <h2>{{ t("usage.by_employee") }}</h2>
+  {% call(r) table(employee, [t("usage.who")]) %}<td><a href="/team/{{ r.employee }}">{{ names.get(r.employee, r.employee) }}</a></td>{% endcall %}
+</section>
+{% endif %}
+{% endblock %}

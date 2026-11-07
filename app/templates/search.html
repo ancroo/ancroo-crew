@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ t("search.title") }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ t("search.title") }}{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h2>{{ t("search.heading") }}</h2>
+  <form class="search" action="/search">
+    <input type="search" name="q" value="{{ q }}" minlength="3" required aria-label="{{ t("search.label") }}" autofocus>
+    <button class="button primary">{{ t("search.button") }}</button>
+  </form>
+  <p class="small">{{ t("search.hint") }}</p>
+  {% if hits %}
+  <table class="list">
+    <tr><th>{{ t("search.who") }}</th><th>{{ t("card.file") }}</th><th>{{ t("search.hits") }}</th><th></th></tr>
+    {% for h in hits %}
+    <tr>
+      <td><a href="/team/{{ h.id }}">{{ names.get(h.id, h.id) }}</a></td>
+      <td data-label="{{ t("card.file") }}"><a href="/team/{{ h.id }}/file?path={{ h.path | urlencode }}">{{ h.path }}</a></td>
+      <td data-label="{{ t("search.hits") }}">{{ h.count }}</td>
+      <td class="buttons">{% if editable(h.path) %}<a class="button" href="/team/{{ h.id }}/edit?path={{ h.path | urlencode }}">{{ t("common.edit") }}</a>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% elif q | length >= 3 %}
+  <p class="empty">{{ t("search.nothing", q=q) }}</p>
+  {% elif q %}
+  <p class="empty">{{ t("search.too_short") }}</p>
+  {% endif %}
+</section>
+{% endblock %}

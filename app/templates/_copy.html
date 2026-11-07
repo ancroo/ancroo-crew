@@ -1,0 +1,4 @@
+{# Copies a Markdown text: the source as plain text for an editor, the HTML rendered in `target` for Word or mail. #}
+{% macro copy_button(text, target) -%}
+<button class="button" type="button" data-copy="{{ text.strip() }}" data-copy-html="{{ target }}" data-done="{{ t("common.copied") }}">{{ t("common.copy") }}</button>
+{%- endmacro %}

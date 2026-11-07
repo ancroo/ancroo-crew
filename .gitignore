@@ -1,0 +1,20 @@
+# The company is a Git repository of its own and never belongs here, nor do its data and backups.
+/company/
+/data/
+/backups/
+# Settings for deploy: server, paths, tokens. Only company.env.example belongs into Git.
+*.env
+# Private notes about servers.
+/urls-*.md
+# Notes for Claude Code, kept local like in the other Ancroo repositories.
+/CLAUDE.md
+/.claude/
+/.mcp.json
+/.idea/
+/.vscode/
+/.venv/
+__pycache__/
+.pytest_cache/
+
+# Articles, LinkedIn/website images, videos — local only, never committed
+marketing/

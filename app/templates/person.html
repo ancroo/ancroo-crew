@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "_copy.html" import copy_button with context %}
+{% block title %}{{ p.display_name }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ p.display_name }}{% endblock %}
+
+{% block content %}
+<div class="card-head large">
+  <span class="avatar human">{{ p.display_name[:1] }}</span>
+  <div>
+    <h1>{{ p.display_name }}</h1>
+    <p class="subtitle">{{ p.name }}{% for r in p.roles %} · {{ t("role." ~ r) }}{% endfor %}</p>
+  </div>
+</div>
+
+<section class="panel">
+  <dl class="facts wide">
+    <dt>{{ t("person.kind") }}</dt><dd>{{ t("team.human") }}</dd>
+    <dt>{{ t("card.id") }}</dt><dd><code>{{ p.id }}</code></dd>
+    <dt>{{ t("person.language") }}</dt><dd>{{ t("lang." ~ p.language) }}</dd>
+  </dl>
+</section>
+
+<section class="panel" id="about">
+  <h2>{{ t("person.about_heading", name=p.display_name) }}</h2>
+  {% if p.about.strip() %}
+  <div class="text">{{ p.about | markdown }}</div>
+  {% else %}
+  <p class="empty">{{ t("person.about_empty") }}</p>
+  {% endif %}
+  <p class="small">{{ t("person.about_hint") }}</p>
+  {% if own or p.about.strip() %}<p class="buttons below">
+    {% if own %}<a class="button" href="/document/edit?path=people/{{ p.id }}/profile.md">{{ t("common.edit") }}</a>{% endif %}
+    {% if p.about.strip() %}{{ copy_button(p.about, "#about .text") }}{% endif %}</p>{% endif %}
+</section>
+
+{% if own %}
+<section class="panel" id="profile">
+  <h2>{{ t("person.profile") }}</h2>
+  <form class="form" id="profile-form">
+    <label for="name">{{ t("person.name") }}</label>
+    <input id="name" value="{{ p.name }}" required maxlength="40">
+    <label for="display">{{ t("person.display_name") }}</label>
+    <input id="display" value="{{ p.display_name }}" maxlength="40">
+    <label for="language">{{ t("person.language") }}</label>
+    <select id="language">{% for l in languages %}<option value="{{ l }}"{{ " selected" if l == p.language }}>{{ t("lang." ~ l) }}</option>{% endfor %}</select>
+    <p class="buttons"><button class="button primary">{{ t("common.save") }}</button></p>
+  </form>
+  <p class="small">{{ t("person.name_hint") }}</p>
+</section>
+
+<section class="panel" id="login">
+  <h2>{{ t("person.password") }}</h2>
+  <form class="form" id="password-form">
+    <label for="password">{{ t("person.new_password", n=min_length) }}</label>
+    <input id="password" type="password" autocomplete="new-password" minlength="{{ min_length }}" required>
+    <p class="buttons"><button class="button primary">{{ t("person.set_password") }}</button></p>
+  </form>
+  <p class="small">{{ t("person.password_hint") }}</p>
+</section>
+<script>
+async function post(path, data) {
+  const response = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
+  const result = await response.json();
+  if (!response.ok) { alert(result.detail); return null; }
+  return result;
+}
+document.getElementById("profile-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const result = await post("/people/{{ p.id }}/profile", {name: document.getElementById("name").value,
+    display_name: document.getElementById("display").value, language: document.getElementById("language").value,
+    about: {{ p.about | tojson }}});
+  if (!result) return;
+  if (result.hint) alert(result.hint);
+  location.reload();
+});
+document.getElementById("password-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (await post("/people/{{ p.id }}/password", {password: document.getElementById("password").value})) location.href = "/login";
+});
+</script>
+{% endif %}
+{% endblock %}

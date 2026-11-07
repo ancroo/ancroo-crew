@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_copy.html" import copy_button with context %}
+{% block title %}{{ t("version.title", name=c.name, when=v.when) }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › <a href="/team/{{ c.id }}#profile">{{ c.name }}</a> › {{ t("version.crumb", when=v.when) }}{% endblock %}
+
+{% block content %}
+<div class="card-head large">
+  <span class="avatar">{{ c.name[:1] }}</span>
+  <div>
+    <h1>{{ t("version.heading", what=t("part." ~ v.part)) }}</h1>
+    <p class="subtitle">{{ c.name }} · {{ v.when }} · {{ v.subject }}</p>
+  </div>
+</div>
+
+<section class="panel">
+  <h2>{{ t("version.changes") }}</h2>
+  {% if v.diff %}<pre class="diff">{{ v.diff | diff }}</pre>{% else %}<p class="empty">{{ t("version.no_changes") }}</p>{% endif %}
+</section>
+
+<section class="panel" id="text">
+  <h2>{{ t("version.text") }}</h2>
+  <details>
+    <summary>{{ t("version.read") }}</summary>
+    <div class="text">{{ v.text | markdown }}</div>
+  </details>
+  <p class="buttons below">
+    {% if current %}<span class="small">{{ t("version.is_current") }}</span>{% else %}<button class="button primary" id="restore" data-question="{{ t("version.restore_question", name=c.name, when=v.when, what=t("part." ~ v.part)) }}">{{ t("version.restore") }}</button>{% endif %}
+    {{ copy_button(v.text, "#text .text") }}
+  </p>
+  <p class="small">{{ t("version.restore_hint", name=c.name) }}</p>
+</section>
+
+<script>
+document.getElementById("restore")?.addEventListener("click", async e => {
+  if (!confirm(e.target.dataset.question)) return;
+  const response = await fetch(location.pathname + "/restore?part={{ v.part }}", {method: "POST"});
+  const data = await response.json();
+  if (!response.ok) return alert(data.detail);
+  if (data.hint) alert(data.hint);
+  location.href = "/team/{{ c.id }}#profile";
+});
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Starts the web UI. On the first run the Python environment is created.
+set -euo pipefail
+cd "$(dirname "$(readlink -f "$0")")"
+if [[ ! -x .venv/bin/uvicorn ]]; then
+  python3 -m venv .venv
+  .venv/bin/pip install --quiet -r requirements.txt
+fi
+exec .venv/bin/uvicorn app.main:app --host "${COMPANY_HOST:-127.0.0.1}" --port "${COMPANY_PORT:-8700}" "$@"

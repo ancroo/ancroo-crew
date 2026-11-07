@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ t("login.title") }}{% endblock %}
+
+{% block content %}
+<section class="panel narrow">
+  <h2>{{ t("login.title") }}</h2>
+  <form class="form" id="login">
+    <label for="name">{{ t("login.name") }}</label>
+    <input id="name" autocomplete="username" autocapitalize="none" required autofocus>
+    <label for="password">{{ t("login.password") }}</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <p class="error" id="notice" hidden></p>
+    <p class="buttons"><button class="button primary">{{ t("login.button") }}</button></p>
+  </form>
+</section>
+<script>
+document.getElementById("login").addEventListener("submit", async e => {
+  e.preventDefault();
+  const response = await fetch("/login", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({name: document.getElementById("name").value, password: document.getElementById("password").value})});
+  if (response.ok) return location.href = {{ next | tojson }};
+  const notice = document.getElementById("notice");
+  notice.textContent = (await response.json()).detail;
+  notice.hidden = false;
+});
+</script>
+{% endblock %}

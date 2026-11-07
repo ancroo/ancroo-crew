@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ t("nav.services") }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ t("nav.services") }}{% endblock %}
+
+{% block content %}
+<section class="panel" id="token">
+  <h2>{{ t("svc.token") }}</h2>
+  <p>{% if token %}{{ t("svc.token_set." ~ token) }}{% else %}<strong class="error">{{ t("svc.token_missing") }}</strong>{% endif %}</p>
+  <form class="form" id="token-form">
+    <label for="token-kind">{{ t("svc.token_kind") }}</label>
+    <select id="token-kind">
+      <option value="subscription">{{ t("svc.kind.subscription") }}</option>
+      <option value="api">{{ t("svc.kind.api") }}</option>
+    </select>
+    <label for="token-value">{{ t("svc.token_value") }}</label>
+    <input id="token-value" type="password" autocomplete="off" required>
+    <p class="buttons"><button class="button primary">{{ t("svc.token_save") }}</button></p>
+  </form>
+  <p class="small">{{ t("svc.token_hint") }}</p>
+</section>
+
+<section class="panel" id="services">
+  <h2>{{ t("nav.services") }}</h2>
+  {% if services %}
+  <table class="list">
+    <tr><th>{{ t("svc.name") }}</th><th>{{ t("svc.url") }}</th><th>{{ t("svc.blocked") }}</th><th>{{ t("svc.secrets") }}</th><th></th></tr>
+    {% for s in services %}
+    <tr>
+      <td><code>{{ s.name }}</code><br><span class="small">{{ s.description }}</span></td>
+      <td data-label="{{ t("svc.url") }}"><code>{{ s.url }}</code> ({{ s.type }})</td>
+      <td data-label="{{ t("svc.blocked") }}">{% for b in s.blocked %}<code>{{ b }}</code> {% else %}–{% endfor %}</td>
+      <td data-label="{{ t("svc.secrets") }}">{% for h in s.headers %}<code>{{ h }}</code> ✓ {% else %}–{% endfor %}</td>
+      <td class="buttons">
+        <button class="button" data-fill='{{ s | tojson }}'>{{ t("common.edit") }}</button>
+        <button class="button" data-delete="{{ s.name }}">{{ t("common.delete") }}</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="empty">{{ t("svc.none") }}</p>
+  {% endif %}
+  <details class="below" id="service-details">
+    <summary>{{ t("svc.add") }}</summary>
+    <form class="form" id="service-form">
+      <label for="s-name">{{ t("svc.name") }}</label>
+      <input id="s-name" required pattern="[A-Za-z0-9_\-]+" autocomplete="off" spellcheck="false">
+      <label for="s-description">{{ t("svc.description") }}</label>
+      <input id="s-description" autocomplete="off">
+      <label for="s-type">{{ t("svc.type") }}</label>
+      <select id="s-type"><option value="http">http</option><option value="sse">sse</option></select>
+      <label for="s-url">{{ t("svc.url") }}</label>
+      <input id="s-url" required placeholder="http://service:8000/mcp" autocomplete="off" spellcheck="false">
+      <label for="s-blocked">{{ t("svc.blocked_comma") }}</label>
+      <input id="s-blocked" autocomplete="off" spellcheck="false">
+      <label for="s-header">{{ t("svc.header_name") }}</label>
+      <input id="s-header" placeholder="Authorization" autocomplete="off" spellcheck="false">
+      <label for="s-value">{{ t("svc.header_value") }}</label>
+      <input id="s-value" type="password" placeholder="Bearer …" autocomplete="off">
+      <p class="buttons"><button class="button primary">{{ t("common.save") }}</button></p>
+    </form>
+    <p class="small">{{ t("svc.hint") }}{% if network %} {{ t("svc.network", network=network) }}{% endif %}</p>
+  </details>
+</section>
+
+<script>
+async function post(path, data) {
+  const response = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
+  const result = await response.json();
+  if (!response.ok) { alert(result.detail); return null; }
+  return result;
+}
+const value = id => document.getElementById(id).value;
+document.getElementById("token-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (await post("/token", {kind: value("token-kind"), value: value("token-value")})) location.reload();
+});
+document.getElementById("service-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const data = {name: value("s-name"), description: value("s-description"), type: value("s-type"), url: value("s-url"),
+                blocked: value("s-blocked"), header_name: value("s-header"), header_value: value("s-value")};
+  if (await post("/services", data)) location.reload();
+});
+document.querySelectorAll("[data-fill]").forEach(button => button.addEventListener("click", () => {
+  const s = JSON.parse(button.dataset.fill);
+  document.getElementById("s-name").value = s.name;
+  document.getElementById("s-description").value = s.description;
+  document.getElementById("s-type").value = s.type;
+  document.getElementById("s-url").value = s.url;
+  document.getElementById("s-blocked").value = s.blocked.join(",");
+  document.getElementById("s-header").value = s.headers[0] || "";
+  document.getElementById("s-value").value = "";
+  document.getElementById("service-details").open = true;
+}));
+document.querySelectorAll("[data-delete]").forEach(button => button.addEventListener("click", async () => {
+  if (!confirm({{ t("svc.delete_question") | tojson }})) return;
+  if (await post(`/services/${button.dataset.delete}/delete`, {})) location.reload();
+}));
+</script>
+{% endblock %}

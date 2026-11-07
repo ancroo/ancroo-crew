@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% macro employee_card(c) %}
+<article class="card">
+  <div class="card-head">
+    <span class="avatar">{{ c.name[:1] }}</span>
+    <div>
+      <h3><a href="/team/{{ c.id }}">{{ c.name }}</a></h3>
+      <p class="subtitle">{{ c.title }}</p>
+    </div>
+    {% if not c.candidate %}{% set on = c.id in favorites %}
+    <button class="star" data-favorite="{{ c.id }}" aria-pressed="{{ "true" if on else "false" }}" title="{{ t("team.unfavorite") if on else t("team.favorite") }}" aria-label="{{ t("team.favorite_label", name=c.name) }}">{{ "★" if on else "☆" }}</button>{% endif %}
+  </div>
+  <p class="badges">
+    <span class="badge kind">{{ t("team.ai") }}</span>
+    {% if c.candidate %}<span class="badge candidate">{{ t("status.candidate") }}</span>{% endif %}
+    {% for r in c.roles %}<span class="badge">{{ t("role." ~ r) }}</span>{% endfor %}
+    {% if c.id in busy %}<span class="badge active">{{ t("team.in_conversation") }}</span>{% endif %}
+    {% if c.feedback.open %}<a class="badge warn" href="/team/{{ c.id }}/feedback/{{ c.feedback.open }}">{{ t("team.feedback_open") }}</a>{% endif %}
+    {% if open_requests.get(c.id) %}<a class="badge warn" href="/team/{{ c.id }}#approvals">{{ tn("team.requests", open_requests[c.id]) }}</a>{% endif %}
+  </p>
+  <dl class="facts">
+    <dt>{{ t("team.last_conversation") }}</dt><dd>{{ c.last_conversation | meeting or "–" }}</dd>
+    {% if c.last_assignment %}<dt>{{ t("team.last_assignment") }}</dt><dd>{{ c.last_assignment | meeting }}</dd>{% endif %}
+  </dl>
+  <p class="buttons">
+    <a class="button{{ " primary" if c.candidate }}" href="/team/{{ c.id }}">{{ t("team.card") }}</a>
+    {% if not c.candidate %}<a class="button primary" href="/chat/{{ c.id }}">{{ t("team.chat") }}</a>{% endif %}
+  </p>
+</article>
+{% endmacro %}
+
+{% block crumbs %}<a href="/handbook">{{ t("nav.handbook") }}</a> · <a href="/services">{{ t("nav.services") }}</a> · <a href="/usage">{{ t("nav.usage") }}</a> · <a href="/settings">{{ t("nav.settings") }}</a>{% endblock %}
+
+{% block content %}
+<h1>{{ t("nav.team") }}</h1>
+
+{% if not token %}
+<p class="error">{{ t("team.no_token") }} <a href="/services#token">{{ t("nav.services") }}</a></p>
+{% endif %}
+
+<h2>{{ t("team.humans") }}</h2>
+<div class="cards">
+  {% for p in people %}
+  <article class="card">
+    <div class="card-head">
+      <span class="avatar human">{{ p.display_name[:1] }}</span>
+      <div>
+        <h3><a href="/people/{{ p.id }}">{{ p.display_name }}</a></h3>
+        <p class="subtitle">{{ p.name }}</p>
+      </div>
+    </div>
+    <p class="badges"><span class="badge kind">{{ t("team.human") }}</span>{% for r in p.roles %}<span class="badge">{{ t("role." ~ r) }}</span>{% endfor %}</p>
+    <p class="buttons"><a class="button" href="/people/{{ p.id }}">{{ t("team.profile") }}</a></p>
+  </article>
+  {% endfor %}
+</div>
+
+<h2>{{ t("team.employees") }}</h2>
+{% if not employees %}<p class="empty">{{ t("team.no_employees") }}</p>{% endif %}
+{% if favorites %}
+<div class="cards">
+  {% for c in employees if c.id in favorites %}{{ employee_card(c) }}{% endfor %}
+</div>
+{% endif %}
+<div class="cards">
+  {% for c in employees if c.id not in favorites %}{{ employee_card(c) }}{% endfor %}
+</div>
+<p class="buttons below">
+  {% if roles.hr %}<a class="button primary" href="/hiring">{{ t("team.hire_interview") }}</a>{% endif %}
+  <a class="button{{ "" if roles.hr else " primary" }}" href="/hire">{{ t("team.hire_preset") }}</a>
+</p>
+
+<section class="panel" id="roles">
+  <h2>{{ t("team.roles") }}</h2>
+  <dl class="facts wide">
+    {% for role, names in roles.items() %}
+    <dt>{{ t("role." ~ role) }}</dt><dd>{{ names | join(", ") if names else t("team.role_missing." ~ role) }}</dd>
+    {% endfor %}
+  </dl>
+  <p class="small">{{ t("team.roles_hint") }}</p>
+</section>
+
+{% if archive %}
+<details class="archive">
+  <summary>{{ t("team.archive", n=archive | length) }}</summary>
+  <p class="small">{{ t("team.archive_hint") }}</p>
+  <ul class="files">{% for name in archive %}<li><a href="/archive/{{ name }}">{{ name }}</a></li>{% endfor %}</ul>
+</details>
+{% endif %}
+
+{% if candidates %}
+<h2>{{ t("team.candidates") }}</h2>
+<div class="cards">
+  {% for c in candidates %}{{ employee_card(c) }}{% endfor %}
+</div>
+{% endif %}
+
+<script>
+document.querySelectorAll("[data-favorite]").forEach(button => button.addEventListener("click", async () => {
+  const response = await fetch(`/team/${button.dataset.favorite}/favorite`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({favorite: button.getAttribute("aria-pressed") !== "true"})});
+  if (!response.ok) alert((await response.json()).detail);
+  location.reload();
+}));
+</script>
+{% endblock %}

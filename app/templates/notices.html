@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ t("nav.notices") }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ t("nav.notices") }}{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h2>{{ t("notices.heading") }}</h2>
+  <p class="small">{{ t("notices.hint") }}</p>
+  <p class="buttons">
+    <a class="button{{ " primary" if not read }}" href="/notices"{% if not read %} aria-current="page"{% endif %}>{{ t("notices.show_unread") }}{% if unread %} ({{ unread }}){% endif %}</a>
+    <a class="button{{ " primary" if read }}" href="/notices?read=1"{% if read %} aria-current="page"{% endif %}>{{ t("notices.show_read") }}</a>
+    {% if not read and unread %}<button class="button" id="all-read">{{ t("notices.all_read") }}</button>{% endif %}
+  </p>
+  {% for n in notices %}
+  <article class="notice{{ " unread" if not n.read }}" id="n-{{ n.id }}">
+    <p class="from">
+      <a href="/team/{{ n.employee }}">{{ names.get(n.employee, n.employee) }}</a> · {{ n.created | datetime }}
+    </p>
+    <div class="text">{{ n.text | markdown }}</div>
+    <p class="buttons">
+      {% if n.conversation_id %}<a class="button primary" href="/conversation/{{ n.conversation_id }}"{% if not n.read %} data-open="{{ n.id }}"{% endif %}>{{ t("notices.open") }}</a>{% endif %}
+      {% if not n.read %}<button class="button" data-read="{{ n.id }}">{{ t("notices.read") }}</button>{% endif %}
+    </p>
+  </article>
+  {% else %}
+  <p class="empty">{{ t("notices.none_read" if read else "notices.none") }}</p>
+  {% endfor %}
+</section>
+<script>
+async function markRead(nid, then) {
+  const response = await fetch("/notices/read", {method: "POST", headers: {"Content-Type": "application/json"},
+                                                 body: JSON.stringify(nid ? {nid: Number(nid)} : {})});
+  if (!response.ok) return alert((await response.json()).detail);
+  if (then) location.href = then;
+  else location.reload();
+}
+document.getElementById("all-read")?.addEventListener("click", () => markRead(null));
+document.querySelectorAll("[data-read]").forEach(button =>
+  button.addEventListener("click", () => markRead(button.dataset.read)));
+// Whoever opens the conversation of a notice has seen it.
+document.querySelectorAll("[data-open]").forEach(link => link.addEventListener("click", e => {
+  e.preventDefault();
+  markRead(link.dataset.open, link.href);
+}));
+</script>
+{% endblock %}

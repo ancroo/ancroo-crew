@@ -1,0 +1,10 @@
+  <table class="list">
+    <tr><th>{{ t("conv.started") }}</th><th>{{ t("conv.messages") }}</th><th>{{ t("conv.transcript") }}</th></tr>
+    {% for conv in conversations %}
+    <tr>
+      <td><a href="/conversation/{{ conv.id }}">{{ conv.started | datetime }}</a>{% if conv.kind == "hiring" %} · {{ t("conv.hiring") }}{% endif %}{% if conv.channel != "web" %} · {{ conv.channel }}{% endif %}{% if conv.status != "ended" %} · <strong>{{ t("conv.status." ~ conv.status) }}</strong>{% endif %}</td>
+      <td data-label="{{ t("conv.messages") }}">{{ conv.count }}</td>
+      <td data-label="{{ t("conv.transcript") }}">{% if conv.transcript %}<a href="/team/{{ c.id }}/file?path={{ conv.transcript.split('/', 2)[2] | urlencode }}">{{ t("conv.view") }}</a>{% else %}–{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </table>

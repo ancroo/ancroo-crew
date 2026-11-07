@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ t("conv.title", name=c.name) }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › <a href="/team/{{ c.id }}">{{ c.name }}</a> › {{ t("card.conversations") }}{% endblock %}
+
+{% block content %}
+{% for month, conversations in months.items() %}
+<section class="panel">
+  <h2>{{ month }}</h2>
+  {% include "_conversations.html" %}
+</section>
+{% else %}
+<section class="panel">
+  <p class="empty">{{ t("card.no_conversations") }}</p>
+</section>
+{% endfor %}
+{% if archivist and archivist != c.id %}
+<p class="small">{{ t("conv.ask_archivist") }} <a href="/chat/{{ archivist }}">{{ names.get(archivist, archivist) }}</a>.</p>
+{% endif %}
+{% endblock %}
