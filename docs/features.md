@@ -39,6 +39,6 @@ What the UI and the employees can do, page by page.
 - **Backups** run every day at `COMPANY_BACKUP_TIME`, see [Backups](operation.md#backups).
 
 <p>
-  <a href="../assets/screenshots/ancroo-key-facts.png"><img src="../assets/screenshots/ancroo-key-facts.png" alt="The card of an employee with the key facts from the profile header" width="400"></a>
-  <a href="../assets/screenshots/ancroo-profile.png"><img src="../assets/screenshots/ancroo-profile.png" alt="Editing profile.md with a kind and a reason for the change" width="400"></a>
+  <a href="../assets/screenshots/ancroo-crew-ai-employee.png"><img src="../assets/screenshots/ancroo-crew-ai-employee.png" alt="The card of an employee with the key facts from the profile header" width="400"></a>
+  <a href="../assets/screenshots/ancroo-crew-edit-profile.png"><img src="../assets/screenshots/ancroo-crew-edit-profile.png" alt="Editing profile.md with a kind and a reason for the change" width="400"></a>
 </p>

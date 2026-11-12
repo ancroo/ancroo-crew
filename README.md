@@ -82,7 +82,10 @@ With a VPN that serves HTTPS, or with a reverse proxy, pass the `Host` header th
 4. **Talk to them.** Open the chat from an employee's card. When something is not how you want it, say how it should be done from now on. The employee changes their own profile, and you see the change with an "Undo" button.
 5. **Hire for a real need.** Once HR is in place, "Hiring interview" lets HR find out what you need and write a draft profile, which you hire from its card.
 
-![A conversation with the assistant Lio, who reads the open tasks from the task list service](assets/screenshots/ancroo-chat-todo.png)
+<p>
+  <a href="assets/screenshots/ancroo-crew-chat-any-todos.png"><img src="assets/screenshots/ancroo-crew-chat-any-todos.png" alt="A conversation with the assistant Lio, who reads the calendar and the open tasks from the task list service" width="400"></a>
+  <a href="assets/screenshots/ancroo-crew-ai-employee.png"><img src="assets/screenshots/ancroo-crew-ai-employee.png" alt="The card of the AI employee Lio: key facts, profile, agreement, feedback meeting and conversations" width="400"></a>
+</p>
 
 ## Documentation
 
