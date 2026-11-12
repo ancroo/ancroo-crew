@@ -21,5 +21,9 @@ ENV PYTHONUNBUFFERED=1 \
     HOME=/tmp \
     COMPANY_HOST=0.0.0.0
 
+# Last, so that a new commit does not rebuild the layers above.
+ARG COMPANY_VERSION=""
+ENV COMPANY_VERSION=$COMPANY_VERSION
+
 EXPOSE 8700
 CMD ["./start"]

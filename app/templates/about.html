@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ t("about.title") }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ t("about.title") }}{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h2>Ancroo Crew</h2>
+  <p>{{ t("about.intro") }}</p>
+</section>
+
+<section class="panel">
+  <h2>{{ t("about.version") }}</h2>
+  {% if commit %}
+  <p>{{ t("about.commit") }} <a href="{{ source }}/commit/{{ commit }}"><code>{{ commit }}</code></a>{% if modified %}, {{ t("about.modified") }}{% endif %}</p>
+  {% else %}
+  <p class="empty">{{ t("about.version_unknown") }}</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>{{ t("about.license") }}</h2>
+  <p>{{ t("about.license_text") }}</p>
+  <p><a href="{{ source }}/blob/main/LICENSE">{{ t("about.license_link") }}</a></p>
+</section>
+
+<section class="panel">
+  <h2>{{ t("about.source") }}</h2>
+  <p>{{ t("about.source_text") }} <a href="{{ source }}">{{ source.removeprefix("https://") }}</a></p>
+</section>
+
+<section class="panel">
+  <h2>{{ t("about.security") }}</h2>
+  <p>{{ t("about.security_text") }} <a href="{{ source }}/security/advisories/new">{{ t("about.security_link") }}</a></p>
+</section>
+
+<section class="panel">
+  <h2>{{ t("about.contact") }}</h2>
+  <p>{{ t("about.contact_text") }} <a href="mailto:{{ support }}">{{ support }}</a></p>
+</section>
+{% endblock %}

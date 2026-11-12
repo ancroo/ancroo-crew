@@ -17,6 +17,10 @@ BACKUP_DAYS = int(os.environ.get("COMPANY_BACKUP_DAYS", "7"))
 # Daily backup at this local time, HH:MM. Empty switches it off.
 BACKUP_TIME = os.environ.get("COMPANY_BACKUP_TIME", "03:15")
 
+# The commit the image was built from, baked into it by deploy; "-modified" when it carried changes not committed
+# yet. Empty when the code does not run from such an image.
+VERSION = os.environ.get("COMPANY_VERSION", "")
+
 IMAGE = os.environ.get("COMPANY_IMAGE", "company-agent")
 # Containers of runs are named with this prefix and a random part. Deploy looks for them before restarting the
 # service, so every installation on a server needs its own prefix; deploy sets "<NAME>-run-".

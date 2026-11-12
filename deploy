@@ -133,12 +133,12 @@ fi
 # The code: the commit, plus changes not committed yet to files Git knows.
 revision=$(git stash create)
 revision=${revision:-HEAD}
-tag=$(git rev-parse --short HEAD)
-git diff --quiet HEAD -- || tag="$tag-modified"
-tag="$tag-$(date +%Y%m%d%H%M%S)"
+version=$(git rev-parse --short HEAD)
+git diff --quiet HEAD -- || version="$version-modified"
+tag="$version-$(date +%Y%m%d%H%M%S)"
 
 info "Building $NAME:$tag on $SERVER"
-git archive --format=tar "$revision" | remote docker build -q -t "$NAME:$tag" -t "$NAME:local" - >/dev/null
+git archive --format=tar "$revision" | remote docker build -q --build-arg "COMPANY_VERSION=$version" -t "$NAME:$tag" -t "$NAME:local" - >/dev/null
 
 info "Building $IMAGE with the latest Claude Code"
 git archive --format=tar "$revision" agent \

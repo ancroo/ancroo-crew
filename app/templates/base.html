@@ -30,6 +30,7 @@
     </a>
     <nav>{% block crumbs %}{% endblock %}</nav>
     {% if me %}<span class="right menu">
+      <a href="/about">{{ t("nav.about") }}</a>
       <a href="/notices">{{ t("nav.notices") }}{% if unread %} <span class="badge active" aria-label="{{ tn("notices.unread", unread) }}">{{ unread }}</span>{% endif %}</a>
       <a href="/people/{{ me.id }}">{{ me.display_name }}</a>
       <button class="button" id="logout">{{ t("nav.logout") }}</button>
@@ -42,6 +43,9 @@
   <main class="{% block main_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
+  {% block footer %}<footer class="footer">
+    Ancroo Crew · <a href="{{ source }}/blob/main/LICENSE">AGPLv3</a> · <a href="{{ source }}">{{ t("footer.source") }}</a>
+  </footer>{% endblock %}
   <script>
 // Copies the Markdown source as plain text (for the editor) and the rendered page as HTML (for
 // Word or mail). Uses the copy event because the Clipboard API needs HTTPS.

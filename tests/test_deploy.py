@@ -72,7 +72,7 @@ def pretend(tmp_path):
 
 
 def test_first_deploy_installs(pretend):
-    deploy, base, state, _ = pretend
+    deploy, base, state, repo = pretend
     result = deploy()
     assert result.returncode == 0, result.stderr
     assert "Running: company2" in result.stdout and "ssh -L 8701:127.0.0.1:8701" in result.stdout
@@ -87,7 +87,11 @@ def test_first_deploy_installs(pretend):
         assert part in compose, part
     assert "SERVER" not in compose and "admin@" not in compose
     calls = (state / "docker.log").read_text()
-    assert "build -q -t company2:" in calls and "-t company2:local -" in calls
+    # The commit goes into the image, so that a rollback shows the version it went back to.
+    commit = subprocess.run(["git", "-C", str(repo), "rev-parse", "--short", "HEAD"], capture_output=True, text=True,
+                            check=True).stdout.strip()
+    assert f"build -q --build-arg COMPANY_VERSION={commit} -t company2:{commit}-" in calls
+    assert "-t company2:local -" in calls and "COMPANY_VERSION" not in compose
     assert "--pull --no-cache -f agent/Dockerfile -t company2-agent:" in calls and "-t company2-agent:latest -" in calls
     assert "network create agents2" in calls and "compose -f" in calls and "up -d --remove-orphans" in calls
     assert "ps --filter name=company2-run- --format {{.Names}} ({{.RunningFor}})" in calls

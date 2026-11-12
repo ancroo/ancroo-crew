@@ -3,6 +3,7 @@
 {% block title %}{{ t("chat.title_hiring" if hiring else "chat.title", name=c.name) }}{% endblock %}
 {% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › <a href="/team/{{ c.id }}">{{ c.name }}</a> › {% if fixed %}{{ t("chat.crumb_hiring_of" if hiring else "chat.crumb_of", when=conv.started | datetime) }}{% elif hiring %}{{ t("chat.crumb_hiring") }}{% else %}{{ t("team.chat") }}{% endif %}{% endblock %}
 {% block main_class %}chat-page{% endblock %}
+{% block footer %}{% endblock %}
 
 {% block content %}
 <div id="chat" data-id="{{ c.id }}" data-name="{{ c.name }}" data-conversation="{{ conv.id if conv else '' }}" data-kind="{{ kind }}"

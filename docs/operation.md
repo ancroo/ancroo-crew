@@ -88,7 +88,7 @@ Environment variables, all optional. On a server they come from `company.env`.
 | `COMPANY_CHANNEL_TOKEN` | empty | Token for `/channel`; without it the endpoint is off |
 | `COMPANY_LOGIN_DAYS` | `30` | Days a login stays valid |
 
-`deploy` sets `COMPANY_DIR`, `COMPANY_DB`, `COMPANY_BACKUPS` and `COMPANY_RUN_PREFIX` itself from `BASE` and `NAME`, and also `COMPANY_NETWORK` and `COMPANY_IMAGE` unless the settings file sets them. The address and port of the UI inside its container are fixed by the image.
+`deploy` sets `COMPANY_DIR`, `COMPANY_DB`, `COMPANY_BACKUPS` and `COMPANY_RUN_PREFIX` itself from `BASE` and `NAME`, and also `COMPANY_NETWORK` and `COMPANY_IMAGE` unless the settings file sets them. The address and port of the UI inside its container are fixed by the image, and so is `COMPANY_VERSION`, the commit `deploy` built it from, shown on the page "About".
 
 ## Login
 

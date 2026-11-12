@@ -127,6 +127,10 @@ def _diff_html(text: str) -> Markup:
 templates.env.filters["diff"] = _diff_html
 # The note of an own change to the profile shows buttons by the state of the change.
 templates.env.globals["profile_change"] = conversations.profile_change
+# Where the code of this software is public. The AGPL asks that everyone who uses it over the network is offered it.
+SOURCE = "https://github.com/ancroo/ancroo-crew"
+SUPPORT = "support@ancroo.com"
+templates.env.globals["source"] = SOURCE
 
 
 def lang_of(request: Request) -> str:
@@ -490,6 +494,12 @@ def password(request: Request, person_id: str, password: str = Body(embed=True),
     except Problem as error:
         raise problem(request, error)
     return {"ok": True}
+
+
+@app.get("/about", response_class=HTMLResponse)
+def about(request: Request):
+    commit, _, rest = config.VERSION.partition("-")
+    return page(request, "about.html", {"commit": commit, "modified": rest == "modified", "support": SUPPORT})
 
 
 @app.get("/handbook", response_class=HTMLResponse)

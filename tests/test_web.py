@@ -111,6 +111,26 @@ def test_foreign_sites_and_redirects(office):
     assert main._own_page(f"/team/{MILA}?x=1")
 
 
+def test_about_offers_license_and_source(firm, monkeypatch):
+    """The AGPL asks that everyone who uses the software over the network is offered its source."""
+    source = f'<a href="{main.SOURCE}">'
+    with TestClient(main.app) as client:
+        login = client.get("/login").text
+        assert source in login and "AGPLv3" in login and 'href="/about"' not in login
+        assert client.get("/about").status_code == 401  # the page itself needs a login: it names the version
+    with web() as client:
+        monkeypatch.setattr(config, "VERSION", "")
+        assert "not built with deploy" in client.get("/about").text
+        monkeypatch.setattr(config, "VERSION", "b9a95ff-modified")
+        page = client.get("/about").text
+        assert f'{main.SOURCE}/commit/b9a95ff"' in page and "not committed yet" in page and main.SUPPORT in page
+        assert f"{main.SOURCE}/security/advisories/new" in page and source in client.get(f"/team/{MILA}").text
+        assert 'href="/about"' in client.get("/").text
+        assert 'class="footer"' in client.get("/").text
+        cid = client.post(f"/chat/{MILA}/message", json={"text": "Hello"}).json()["conversation"]
+        assert 'class="footer"' not in client.get(f"/conversation/{cid}").text  # the chat fills the window
+
+
 def test_pages_load_nothing_from_foreign_addresses(firm):
     """A Markdown image in an answer would otherwise carry data out of the company without a click."""
     with web(follow_redirects=False) as client:
