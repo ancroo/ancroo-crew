@@ -43,6 +43,8 @@ The service itself starts the runs through the server's Docker socket, and acces
 | Answers are rendered as Markdown without raw HTML. Every page has a Content Security Policy: images, scripts and connections only from the UI itself, no frames. | `MarkdownIt("js-default")`, `POLICY` in `app/main.py` | the data in an answer, against an image address that the browser would fetch without a click |
 | The setup creates a company only in an empty folder, and the service starts only with a company of a known schema version. | `ensure` in `app/company.py` | existing data, against a new version of the code or a wrong path in the settings |
 
+The sandbox view (page "Sandbox", off by default) shows every logged-in human how the runs are limited: paths inside the container, tool lists, blocked rules, service names and the tool calls with their targets (file, search, address). It shows no host paths, no tokens and no conversation texts, and keeps nothing on disk. Its description is read from the command that started the run, so it shows what was enforced, not what was meant. Still, it tells whoever sees it where the limits are; switch it on for a demo or a check, not permanently.
+
 The rules in `--disallowedTools` apply to the employees' tools; Claude Code itself keeps reading and writing in `/home/agent`. You can check the block in the chat by asking an employee to read `/proc/version`: the call appears in the tool log, but the employee does not get the content.
 
 ## What applies only by rule

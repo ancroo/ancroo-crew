@@ -1,0 +1,69 @@
+{% set c = run.cage %}
+<article class="panel cage {{ run.status }}" id="run-{{ run.id }}" data-id="{{ run.id }}">
+  <header class="cage-head">
+    <h2><a href="/team/{{ run.employee }}">{{ run.name }}</a></h2>
+    <span class="badge">{{ t("usage.purpose." ~ run.purpose) if run.purpose in purposes else run.purpose }}</span>
+    <span class="badge">{{ run.procedure }}</span>
+    {% if c.model %}<span class="badge">{{ c.model }}</span>{% endif %}
+    <span class="right small">{{ run.started | clock }} ·
+      {% if run.status == "running" %}<span class="badge active">{{ t("sandbox.running") }}</span>
+      {% else %}{{ t("sandbox.seconds", n=run.seconds | number(1)) }}{% if run.cost %} · {{ run.cost | usd }}{% endif %}
+      <span class="badge{{ ' warn' if run.status != 'done' }}">{{ t("sandbox.status." ~ run.status) }}</span>{% endif %}
+    </span>
+  </header>
+
+  <section class="layer">
+    <h3><span class="step">1</span> {{ t("sandbox.layer.container") }}</h3>
+    <p class="why">{{ t("sandbox.why.container") }}</p>
+    <ul class="chips">
+      <li>{{ t("sandbox.network", name=c.network) if c.network else t("sandbox.network_default") }}</li>
+      {% if c.memory %}<li>{{ t("sandbox.memory", size=c.memory) }}</li>{% endif %}
+      {% if c.user %}<li>{{ t("sandbox.user", user=c.user) }}</li>{% endif %}
+      <li>{{ t("sandbox.removed") }}</li>
+    </ul>
+  </section>
+
+  <section class="layer">
+    <h3><span class="step">2</span> {{ t("sandbox.layer.files") }}</h3>
+    <p class="why">{{ t("sandbox.why.files") }}</p>
+    {% set css = {"write": "write", "checked": "write", "protected": "read", "read": "read", "hidden": "hidden",
+                  "missing": "missing", "partly": "missing"} %}
+    {% macro rows(items, css) %}<ul class="mounts">
+      {% for r in items %}<li class="{{ css[r.kind] }}"><div class="row"><span class="paths">{% for p in r.paths %}<code>{{ p }}</code>{% endfor %}</span>
+        <span class="label">{{ tn("sandbox.mount.hidden_in", r.count) if r.kind == "hidden" else t("sandbox.mount." ~ r.kind) }}</span></div>
+        {% if r.full %}<details><summary>{{ t("sandbox.mount.every_path") }}</summary>{% for p in r.full %}<code>{{ p }}</code> {% endfor %}</details>{% endif %}
+        {% if r.children %}{{ rows(r.children, css) }}{% endif %}</li>{% endfor %}
+    </ul>{% endmacro %}
+    {{ rows(run.tree, css) }}
+  </section>
+
+  <section class="layer">
+    <h3><span class="step">3</span> {{ t("sandbox.layer.tools") }}</h3>
+    <p class="why">{{ t("sandbox.why.tools") }}</p>
+    <ul class="chips">
+      {% for tool in c.tools %}<li class="{{ 'web' if tool in c.web else 'yes' }}">✓ {{ tool }}</li>{% endfor %}
+      {% for tool in c.never %}<li class="no">✗ {{ tool }}</li>{% endfor %}
+    </ul>
+    <ul class="chips">
+      {% for rule in c.denied_rules %}<li class="no"><code>{{ rule }}</code></li>{% endfor %}
+    </ul>
+  </section>
+
+  <section class="layer">
+    <h3><span class="step">4</span> {{ t("sandbox.layer.services") }}</h3>
+    <p class="why">{{ t("sandbox.why.services") }}</p>
+    {% if c.services %}<ul class="chips">
+      {% for server, n in c.services.items() %}<li class="yes">✓ {{ server }} <span class="small">({{ tn("sandbox.service_tools", n) }})</span></li>{% endfor %}
+      {% if c.denied_service_tools %}<li class="no">✗ {{ tn("sandbox.service_blocked", c.denied_service_tools | length) }}</li>{% endif %}
+    </ul>{% else %}<p class="empty">{{ t("sandbox.no_services") }}</p>{% endif %}
+  </section>
+
+  <section class="layer">
+    <h3><span class="step">5</span> {{ t("sandbox.layer.calls") }}</h3>
+    {% if run.calls or run.denied %}<ol class="calls">
+      {% for call in run.calls %}<li><span class="small">{{ call.at | clock }}</span> <code>{{ call.name }}</code> {{ call.detail | truncate(90) }}</li>{% endfor %}
+      {% for tool in run.denied %}<li class="no">✗ {{ t("sandbox.denied", tool=tool) }}</li>{% endfor %}
+    </ol>{% else %}<p class="empty">{{ t("sandbox.no_calls") }}</p>{% endif %}
+    {% if run.error and run.status == "failed" %}<p class="error">{{ run.error | truncate(300) }}</p>{% endif %}
+  </section>
+</article>

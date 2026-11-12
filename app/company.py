@@ -820,17 +820,32 @@ def _git_output(*args: str) -> subprocess.CompletedProcess:
 def profile_versions(rel: str, part: str = PROFILE, limit: int = 20) -> list[dict]:
     """The versions of a part of the profile in Git, newest first: commit, time, message and the path at that time.
 
-    The folder moves from candidates to employees on hiring; --follow keeps the earlier versions.
+    The folder moves from candidates to employees on hiring; --follow keeps the earlier versions. Commits that change
+    only the header of profile.md (approved services, roles, model) are left out: the text of the part is the same.
     """
-    result = _git_output("log", "--follow", f"-n{limit}", "--format=%x00%H%x09%ad%x09%s",
-                         "--date=format:%Y-%m-%d %H:%M", "--name-only", "--", f"{rel}/{part}")
+    result = _git_output("log", "--follow", f"-n{limit * 3 if part == PROFILE else limit}",
+                         "--format=%x00%H%x09%ad%x09%s", "--date=format:%Y-%m-%d %H:%M", "--name-only", "--",
+                         f"{rel}/{part}")
     versions = []
     for entry in result.stdout.split("\x00")[1:] if result.returncode == 0 else []:
         lines = [line for line in entry.splitlines() if line.strip()]
         commit_id, when, subject = (lines[0].split("\t", 2) + ["", ""])[:3]
-        versions.append({"commit": commit_id, "when": when, "subject": subject,
-                         "path": lines[1] if len(lines) > 1 else f"{rel}/{part}"})
+        path = lines[1] if len(lines) > 1 else f"{rel}/{part}"
+        if part == PROFILE and _header_only(rel, commit_id, path):
+            continue
+        versions.append({"commit": commit_id, "when": when, "subject": subject, "path": path})
+        if len(versions) == limit:
+            break
     return versions
+
+
+def _header_only(rel: str, commit_id: str, path: str) -> bool:
+    """Whether the commit changed only the header of profile.md. A first version or a move counts as a change."""
+    earlier = _git_output("show", f"{commit_id}^:{path}")
+    if earlier.returncode != 0:
+        return False
+    now = _git_output("show", f"{commit_id}:{path}")
+    return now.returncode == 0 and part_text(rel, PROFILE, now.stdout) == part_text(rel, PROFILE, earlier.stdout)
 
 
 def profile_version(rel: str, commit_id: str, part: str = PROFILE) -> dict:

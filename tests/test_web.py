@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app import auth, company, config, db, i18n, main, notices, usage
+from app import auth, company, config, db, i18n, main, notices, sandbox, usage
 from app.conversations import Conversations
 from app.personnel import Personnel
 from app.runner import DummyRunner
@@ -563,7 +563,9 @@ def test_page_scripts_are_valid(office, tmp_path):
              "feedback": f"/team/{MILA}/feedback/{meeting}", "edit": f"/team/{MILA}/edit?path=profile.md",
              "document": "/document/edit?path=handbook.md", "archive": f"/archive/{folder}",
              "person": f"/people/{OWNER}", "services": "/services", "settings": "/settings", "hire": "/hire?preset=1-hr",
-             "team": "/", "version": f"/team/{MILA}/profile/{version}", "notices": "/notices"}
+             "team": "/", "version": f"/team/{MILA}/profile/{version}", "notices": "/notices",
+             "sandbox": "/sandbox"}
+    sandbox.set_enabled(True)  # the page has its script only then
     for lang in ("en", "de"):
         company.update_person(OWNER, "Paul Weber", "Paul", lang, "")
         with web() as client:

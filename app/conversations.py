@@ -38,7 +38,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import AsyncIterator
 
-from . import company, config, db, i18n, notices, usage
+from . import company, config, db, i18n, notices, sandbox, usage
 from .errors import Problem, Rejected, Unknown
 from .runner import Task
 
@@ -641,22 +641,42 @@ class Conversations:
         """Run a task, book the usage and return the end event. An error is in it; it is not raised. Every run goes
         through here, so only here is booked."""
         end = {"text": "", "denied": [], "cost": None, "error": "The run ended without a result."}
+        shown = None  # the run in the sandbox view, if it is on
         try:
             async with asyncio.timeout(config.RUN_TIMEOUT):
                 async for event in self.runner.run(task):
                     if event["kind"] == "end":
                         end = event
-                    elif on_event:
-                        on_event(event)
+                    elif event["kind"] == "sandbox":
+                        shown = self._show(task, purpose, event["command"])
+                    else:
+                        if shown and event["kind"] == "call":
+                            sandbox.board.call(shown, event)
+                        if on_event:
+                            on_event(event)
         except TimeoutError:
             end["error"] = f"Cancelled after {config.RUN_TIMEOUT:.0f} seconds."
+        except asyncio.CancelledError:
+            if shown:
+                sandbox.board.finish(shown, {}, "stopped")
+            raise
         except Exception as error:  # a broken run must not stop the queue
             end["error"] = f"{type(error).__name__}: {error}"
+        if shown:
+            sandbox.board.finish(shown, end)
         try:
             usage.book(task, end, purpose, conversation, job)
         except Exception:  # e.g. a briefly locked database. No answer shall fail because of the bookkeeping.
             pass
         return end
+
+    @staticmethod
+    def _show(task: Task, purpose: str, command: list[str]):
+        """The view is for looking at the limits; it must never break a run."""
+        try:
+            return sandbox.board.start(task, purpose, command)
+        except Exception:
+            return None
 
     async def _run(self, cid: int, kind: str, task: Task) -> dict:
         """Run, record and return the end event."""

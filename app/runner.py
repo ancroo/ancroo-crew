@@ -8,6 +8,7 @@ Events are dictionaries:
   {"kind": "tool", "name": "..."}        the employee is using a tool right now
   {"kind": "call", "name": "...", "detail": "..."}   the finished call: which address, search or file
   {"kind": "end", "text": "...", "denied": [...], "cost": 0.0, "error": None}
+  {"kind": "sandbox", "command": [...]}  first, the command that starts the run, for the sandbox view
 The end can also hold "result" (only the last answer, without intermediate texts), "structured" (answer following the
 schema of the task) and "usage". Usage is a list with one entry per model: {"model", "input", "cache_write",
 "cache_read", "output", "web_searches", "cost"}. The tokens are those of the whole run, over all turns.
@@ -19,7 +20,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import AsyncIterator
 
-from . import company, config
+from . import company, config, sandbox
 
 
 @dataclass
@@ -236,8 +237,10 @@ class DockerRunner:
 
     async def run(self, task: Task) -> AsyncIterator[dict]:
         name = f"{config.RUN_PREFIX}{uuid.uuid4().hex[:12]}"
+        command = self.command(task, name)
+        yield {"kind": "sandbox", "command": command}
         process = await asyncio.create_subprocess_exec(
-            *self.command(task, name),
+            *command,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
             limit=32 * 1024 * 1024,  # one line can hold a whole tool result
         )
@@ -281,6 +284,13 @@ class DummyRunner:
 
     async def run(self, task: Task) -> AsyncIterator[dict]:
         name = company.header(config.COMPANY_DIR / task.rel / company.PROFILE).get("name", "")
+        if sandbox.enabled():
+            # The command a real run would get, so that the sandbox view can be tried. It also writes the prompt and
+            # the settings of Claude Code into the runtime folder, so only when the view is on.
+            try:
+                yield {"kind": "sandbox", "command": DockerRunner().command(task, "dummy")}
+            except RuntimeError:  # no Claude token yet
+                pass
         structured = None
         if task.schema:
             # The schemas of the assessment: open, follow up, report. The dummy never follows up.

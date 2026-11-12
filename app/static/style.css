@@ -344,3 +344,37 @@ details.below { margin-top: 1.2rem; }
 .topbar .menu .button { min-height: 1.9rem; }
 .form .roles { border: none; padding: 0; margin: .5rem 0 0; display: flex; flex-wrap: wrap; gap: .4rem 1rem; }
 .form .roles legend { color: var(--muted); font-size: .93rem; padding: 0; margin-bottom: .3rem; }
+
+/* Sandbox view: one card per run, the limits layer by layer. */
+.cage { border-left: 4px solid var(--border-strong); }
+.cage.running { border-left-color: var(--accent); }
+.cage.failed, .cage.stopped { border-left-color: var(--warn); }
+.cage-head { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .6rem; }
+.cage-head h2 { margin: 0; font-size: 1.2rem; }
+.cage-head h2 a { color: var(--text); text-decoration: none; }
+.cage-head .right { margin-left: auto; }
+.layer { border-top: 1px solid var(--border); padding: .6rem 0 .2rem; }
+.layer h3 { margin: 0; font-size: .95rem; display: flex; align-items: center; gap: .5rem; }
+.layer .step { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%;
+  background: var(--accent); color: var(--accent-text); font-size: .75rem; }
+.layer .why { margin: .1rem 0 .4rem 1.9rem; color: var(--muted); font-size: .82rem; }
+.chips, .mounts, .calls { list-style: none; margin: 0 0 .4rem 1.9rem; padding: 0; font-size: .88rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chips li { border: 1px solid var(--border-strong); border-radius: 3px; padding: 0 .45rem; }
+.chips .yes, .mounts .write { border-color: var(--good); color: var(--good); }
+.chips .web { border-color: var(--warn); color: var(--warn); }
+.chips .no, .calls .no { border-color: var(--warn); color: var(--warn); text-decoration-color: var(--warn); }
+.mounts li { padding: .1rem .4rem; border-left: 3px solid var(--border-strong); }
+.mounts .write { border-left-color: var(--good); }
+.mounts .hidden { border-left-color: var(--warn);
+  background: repeating-linear-gradient(-45deg, transparent 0 6px, var(--border) 6px 8px); }
+.mounts .missing { border-left-style: dotted; opacity: .55; }
+.calls li { padding: .05rem 0; overflow-wrap: anywhere; }
+.layer > .empty, .layer > .error { margin: 0 0 .4rem 1.9rem; font-size: .88rem; }
+.mounts .row { display: flex; flex-wrap: wrap; gap: .3rem .6rem; align-items: baseline; }
+.mounts .paths { display: inline-flex; flex-wrap: wrap; gap: .3rem; }
+.mounts .label { color: var(--muted); font-size: .8rem; }
+.mounts .write > .row .label { color: var(--good); }
+.mounts .mounts { margin: .15rem 0 .1rem 1.2rem; }
+.mounts details { font-size: .78rem; color: var(--muted); margin: .1rem 0; }
+.mounts details code { font-size: .74rem; }

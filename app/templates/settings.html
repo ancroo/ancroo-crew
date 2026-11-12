@@ -41,6 +41,12 @@
   <p class="small">{{ t("settings.logo_hint", size=logo_kb) }}</p>
 </section>
 
+<section class="panel" id="sandbox">
+  <h2>{{ t("settings.sandbox") }}</h2>
+  <label class="choice"><input type="checkbox" id="sandbox-on"{{ " checked" if sandbox_on }}> {{ t("settings.sandbox_on") }}</label>
+  <p class="small">{{ t("settings.sandbox_hint") }} <a href="/sandbox">{{ t("nav.sandbox") }}</a></p>
+</section>
+
 <section class="panel">
   <h2>{{ t("settings.software") }}</h2>
   <p class="small">{{ t("settings.software_hint") }}</p>
@@ -70,6 +76,9 @@ document.getElementById("logo-form").addEventListener("submit", e => {
     if (await post("/settings/logo", {data: reader.result.split(",", 2)[1] || ""})) location.reload();
   });
   reader.readAsDataURL(document.getElementById("logo-file").files[0]);
+});
+document.getElementById("sandbox-on").addEventListener("change", async e => {
+  if (!await post("/settings/sandbox", {on: e.target.checked})) e.target.checked = !e.target.checked;
 });
 const remove = document.getElementById("logo-remove");
 if (remove) remove.addEventListener("click", async () => {

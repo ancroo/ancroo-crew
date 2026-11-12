@@ -353,6 +353,14 @@ def test_profile_versions(firm):
         company.profile_version(rel, "0" * 40)
 
 
+def test_profile_versions_leave_out_header_changes(firm):
+    rel = f"employees/{MILA}"
+    company.commit("Start")
+    company.set_field(firm / rel / company.PROFILE, "services", "todo__list")
+    company.commit("Approval for 0002: todo__list")
+    assert [v["subject"] for v in company.profile_versions(rel)] == ["Start"]
+
+
 def test_services_and_token(firm):
     assert company.services_overview() == [{"name": "todo", "type": "http", "url": "http://localhost:9/mcp",
                                             "description": "Tasks", "blocked": ["delete_all"],

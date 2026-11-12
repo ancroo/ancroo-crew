@@ -18,7 +18,7 @@ from jinja2 import pass_context
 from markdown_it import MarkdownIt
 from markupsafe import Markup
 
-from . import auth, company, config, db, i18n, notices, runner, usage
+from . import auth, company, config, db, i18n, notices, runner, sandbox, usage
 from .conversations import Conversations
 from .errors import Invalid, Problem, Rejected, Unknown
 from .personnel import Personnel
@@ -152,6 +152,7 @@ def page(request: Request, name: str, data: dict) -> HTMLResponse:
                                                       "company_name": company.company_name(),
                                                       "claim": company.claim(),
                                                       "logo_version": logo.stat().st_mtime_ns if logo else None,
+                                                      "sandbox_on": sandbox.enabled(),
                                                       **data})
 
 
@@ -616,6 +617,46 @@ def remove_logo(request: Request, person: str = Depends(actor)):
     if not company.remove_logo():
         raise HTTPException(404, i18n.t(lang_of(request), "err.no_logo"))
     return {"hint": hint(request, "logo_changed", company.committed(f"Logo removed by {person}"))}
+
+
+@app.post("/settings/sandbox")
+def set_sandbox_view(on: bool = Body(embed=True)):
+    sandbox.set_enabled(on)
+    return {"on": sandbox.enabled()}
+
+
+# ---------------------------------------------------------------- Sandbox view
+
+def _run_html(request: Request, run: dict) -> str:
+    return templates.get_template("_sandbox_run.html").render(
+        run=run, lang=lang_of(request), purposes=usage.PURPOSES)
+
+
+@app.get("/sandbox", response_class=HTMLResponse)
+def sandbox_page(request: Request):
+    return page(request, "sandbox.html", {"runs": list(sandbox.board.runs), "purposes": usage.PURPOSES})
+
+
+@app.post("/sandbox/clear")
+def clear_sandbox():
+    sandbox.board.clear()
+    return {"runs": 0}
+
+
+@app.get("/sandbox/events")
+async def sandbox_events(request: Request):
+    if not sandbox.enabled():
+        raise HTTPException(404, i18n.t(lang_of(request), "err.sandbox_off"))
+
+    async def stream():
+        async for run in sandbox.board.watch():
+            if run is None:
+                yield "event: clear\ndata: {}\n\n"
+            else:
+                yield f"event: run\ndata: {json.dumps({'id': run['id'], 'html': _run_html(request, run)})}\n\n"
+
+    return StreamingResponse(stream(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.get("/logo")

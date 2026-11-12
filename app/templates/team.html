@@ -30,7 +30,7 @@
 </article>
 {% endmacro %}
 
-{% block crumbs %}<a href="/handbook">{{ t("nav.handbook") }}</a> · <a href="/services">{{ t("nav.services") }}</a> · <a href="/usage">{{ t("nav.usage") }}</a> · <a href="/settings">{{ t("nav.settings") }}</a>{% endblock %}
+{% block crumbs %}<a href="/handbook">{{ t("nav.handbook") }}</a> · <a href="/services">{{ t("nav.services") }}</a> · <a href="/usage">{{ t("nav.usage") }}</a>{% if sandbox_on %} · <a href="/sandbox">{{ t("nav.sandbox") }}</a>{% endif %} · <a href="/settings">{{ t("nav.settings") }}</a>{% endblock %}
 
 {% block content %}
 <h1>{{ t("nav.team") }}</h1>

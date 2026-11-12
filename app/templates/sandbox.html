@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ t("nav.sandbox") }}{% endblock %}
+{% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › {{ t("nav.sandbox") }}{% endblock %}
+
+{% block content %}
+<p class="small">{{ t("sandbox.intro") }}</p>
+{% if not sandbox_on %}
+<p class="empty">{{ t("sandbox.off") }} <a href="/settings#sandbox">{{ t("nav.settings") }}</a></p>
+{% else %}
+<p class="buttons"><button class="button" id="clear">{{ t("sandbox.clear") }}</button></p>
+<div id="runs">
+  {% for run in runs %}{% include "_sandbox_run.html" %}{% endfor %}
+</div>
+<p class="empty" id="no-runs"{% if runs %} hidden{% endif %}>{{ t("sandbox.no_runs") }}</p>
+<script>
+const runs = document.getElementById("runs");
+const events = new EventSource("/sandbox/events");
+events.addEventListener("run", e => {
+  const data = JSON.parse(e.data);
+  const box = document.createElement("div");
+  box.innerHTML = data.html.trim();
+  const card = box.firstElementChild;
+  const old = document.getElementById("run-" + data.id);
+  if (old) old.replaceWith(card); else runs.prepend(card);
+  document.getElementById("no-runs").hidden = true;
+});
+events.addEventListener("clear", () => {
+  runs.replaceChildren();
+  document.getElementById("no-runs").hidden = false;
+});
+document.getElementById("clear").addEventListener("click", async () => {
+  const response = await fetch("/sandbox/clear", {method: "POST"});
+  if (!response.ok) return;
+  // Also without the event, e.g. when the stream was interrupted.
+  runs.replaceChildren();
+  document.getElementById("no-runs").hidden = false;
+});
+</script>
+{% endif %}
+{% endblock %}
