@@ -62,6 +62,7 @@
   "settings.software_hint": "Links oben steht immer „Ancroo Crew“ mit dem Anker: der Name der Software, auf der diese Installation läuft. Daneben steht deine Firma. Name, Claim und Logo gehören dir; der Name Ancroo und der Anker gehören nicht zu deinen Einstellungen.",
   "about.title": "Über Ancroo Crew",
   "about.intro": "Ancroo Crew ist eine Weboberfläche für eine Firma aus KI-Mitarbeitern. Jeder Mitarbeiter ist ein Ordner mit Textdateien, und jeder Einsatz startet Claude Code in einem kurzlebigen Docker-Container.",
+  "about.author": "Autor",
   "about.version": "Version",
   "about.commit": "Gebaut aus dem Commit",
   "about.modified": "mit Änderungen, die noch nicht committet waren",

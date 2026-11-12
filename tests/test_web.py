@@ -123,7 +123,7 @@ def test_about_offers_license_and_source(firm, monkeypatch):
         assert "not built with deploy" in client.get("/about").text
         monkeypatch.setattr(config, "VERSION", "b9a95ff-modified")
         page = client.get("/about").text
-        assert f'{main.SOURCE}/commit/b9a95ff"' in page and "not committed yet" in page and main.SUPPORT in page
+        assert f'{main.SOURCE}/commit/b9a95ff"' in page and "not committed yet" in page and main.SUPPORT in page and main.AUTHOR[1] in page
         assert f"{main.SOURCE}/security/advisories/new" in page and source in client.get(f"/team/{MILA}").text
         assert 'href="/about"' in client.get("/").text
         assert 'class="footer"' in client.get("/").text

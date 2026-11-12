@@ -62,6 +62,7 @@
   "settings.software_hint": "The top left always says “Ancroo Crew” with the anchor: the name of the software this installation runs on. Your company is shown next to it. Name, claim and logo are yours; the name Ancroo and the anchor logo are not part of your settings.",
   "about.title": "About Ancroo Crew",
   "about.intro": "Ancroo Crew is a web UI for a company of AI employees. Every employee is a folder of text files, and every run starts Claude Code in a short-lived Docker container.",
+  "about.author": "Author",
   "about.version": "Version",
   "about.commit": "Built from the commit",
   "about.modified": "with changes that were not committed yet",

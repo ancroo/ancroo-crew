@@ -130,6 +130,8 @@ templates.env.globals["profile_change"] = conversations.profile_change
 # Where the code of this software is public. The AGPL asks that everyone who uses it over the network is offered it.
 SOURCE = "https://github.com/ancroo/ancroo-crew"
 SUPPORT = "support@ancroo.com"
+# As in LICENSE.
+AUTHOR = ("Stefan Schmidbauer", "https://github.com/Stefan-Schmidbauer")
 templates.env.globals["source"] = SOURCE
 
 
@@ -499,7 +501,8 @@ def password(request: Request, person_id: str, password: str = Body(embed=True),
 @app.get("/about", response_class=HTMLResponse)
 def about(request: Request):
     commit, _, rest = config.VERSION.partition("-")
-    return page(request, "about.html", {"commit": commit, "modified": rest == "modified", "support": SUPPORT})
+    return page(request, "about.html", {"commit": commit, "modified": rest == "modified", "support": SUPPORT,
+                                         "author": AUTHOR})
 
 
 @app.get("/handbook", response_class=HTMLResponse)

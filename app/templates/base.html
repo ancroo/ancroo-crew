@@ -30,10 +30,10 @@
     </a>
     <nav>{% block crumbs %}{% endblock %}</nav>
     {% if me %}<span class="right menu">
-      <a href="/about">{{ t("nav.about") }}</a>
       <a href="/notices">{{ t("nav.notices") }}{% if unread %} <span class="badge active" aria-label="{{ tn("notices.unread", unread) }}">{{ unread }}</span>{% endif %}</a>
       <a href="/people/{{ me.id }}">{{ me.display_name }}</a>
       <button class="button" id="logout">{{ t("nav.logout") }}</button>
+      <a href="/about">{{ t("nav.about") }}</a>
     </span>
     <script>document.getElementById("logout").addEventListener("click", async () => {
       await fetch("/logout", {method: "POST"});

@@ -9,6 +9,11 @@
 </section>
 
 <section class="panel">
+  <h2>{{ t("about.author") }}</h2>
+  <p><a href="{{ author[1] }}">{{ author[0] }}</a></p>
+</section>
+
+<section class="panel">
   <h2>{{ t("about.version") }}</h2>
   {% if commit %}
   <p>{{ t("about.commit") }} <a href="{{ source }}/commit/{{ commit }}"><code>{{ commit }}</code></a>{% if modified %}, {{ t("about.modified") }}{% endif %}</p>
