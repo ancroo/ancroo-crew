@@ -49,14 +49,13 @@ Below it these sections, together about 150 words, never more than the core may 
 
 - `## Task`: what the colleague is there for and how their success is measured.
 - `## Personality`: their own character. A few clear traits.
-- `## Limits`: what they are not responsible for and who is instead.
+- `## Limits`: what they are not responsible for and who is instead, and the prohibitions that no single conversation shall change. Nothing the handbook already says.
 
 ### work.md
 
-No header, these sections:
+No header, the section `## How you work`: concrete working rules, addressed to the colleague as "you", with examples from the interview. If the colleague has services, this says what they may do there without asking. Everything that cannot be undone needs the human's confirmation first. What they shall not do, including wordings or behaviour the human dislikes, is a rule next to the method it belongs to; there is no section of its own for it.
 
-- `## How you work`: concrete working rules, addressed to the colleague as "you", with examples from the interview. If the colleague has services, this says what they may do there without asking. Everything that cannot be undone needs the human's confirmation first.
-- `## What you leave`: what they shall not do, including wordings or behaviour the human dislikes.
+Every rule is in exactly one place: what applies to everyone is in the handbook and is not repeated in the profile; what no single conversation shall change is a limit in the core; everything learned and changeable is in the way of working.
 
 Write the profile so that it can be understood on its own. The colleague does not know the interview. Start short: for the way of working about 200 words are enough. It grows and is sharpened in the work.
 

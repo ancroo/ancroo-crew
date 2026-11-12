@@ -49,7 +49,7 @@ company/                       Git repo of the company; every change is committe
 ├── employees/0002/
 │   ├── profile.md             header (name, title, roles, model, tools, services, self_edit, hired) and the core:
 │   │                          task, personality, limits
-│   ├── work.md                the way of working: rules, methods, what to avoid
+│   ├── work.md                the way of working: rules, methods, facts
 │   ├── agreement.md           what the human agreed to in the hiring interview: purpose and success
 │   ├── journal/               word-for-word transcripts of their conversations
 │   ├── assignments/           what they did in colleagues' conversations

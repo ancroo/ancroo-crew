@@ -681,7 +681,7 @@ def set_header(rel: str, fields: dict[str, str]) -> list[str]:
 
 # ---------------------------------------------------------------- Own changes to the profile
 # The profile has two parts. The core (profile.md, below the header): task, personality, limits. It stays small and
-# changes seldom. The way of working (work.md, no header): rules, methods and what to leave. It may grow, but whoever
+# changes seldom. The way of working (work.md, no header): rules, methods, facts. It may grow, but whoever
 # changes it merges instead of adding. Both are in every prompt.
 # In a conversation with a human the employee changes both themselves. What a human says ("from now on do it like
 # this") applies at once, and what the employee notices goes in as well. The human sees every change in the chat and
@@ -715,8 +715,8 @@ def own_profile_note(rel: str, person_name: str) -> str:
         f"{folder}/{part} has {words(part_text(rel, part))} words, a change that makes it longer than "
         f"{max(part_limit(part), words(part_text(rel, part)))} is not saved" for part in PARTS)
     rules = (f"\n- Your profile has two parts: {folder}/{PROFILE} is the core below the header (task, personality, "
-             f"limits), {folder}/{WORK} your way of working (rules, methods, what you leave). New rules go into the "
-             "way of working. The header between the --- lines (name, title, model, tools, services, roles) only a "
+             f"limits), {folder}/{WORK} your way of working (rules, methods, facts). New rules go into the "
+             "way of working, unless the handbook or the core already says them. The header between the --- lines (name, title, model, tools, services, roles) only a "
              f"human changes; changes there are put back. {sizes}. When and how you change them, the handbook says "
              "under Memory.")
     if self_edit(rel):

@@ -46,7 +46,7 @@ PROBES = int(os.environ.get("COMPANY_PROBES", "3"))
 # follow up. 1: every probe message stands on its own.
 PROBE_TURNS = int(os.environ.get("COMPANY_PROBE_TURNS", "3"))
 # Words of the two parts of a profile: the core (task, personality, limits) and the way of working (rules, methods,
-# what to leave). An own change may not make a part longer than that, or than it already is; the employee then makes
+# facts). An own change may not make a part longer than that, or than it already is; the employee then makes
 # room. If a feedback proposal is longer, HR shortens it in one more run.
 PROFILE_WORDS = int(os.environ.get("COMPANY_PROFILE_WORDS", "300"))
 WORK_WORDS = int(os.environ.get("COMPANY_WORK_WORDS", "1500"))
