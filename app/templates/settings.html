@@ -25,11 +25,10 @@
 
 <section class="panel" id="language">
   <h2>{{ t("settings.language") }}</h2>
-  <form class="form" id="language-form">
+  <div class="form">
     <label for="company-language">{{ t("settings.language") }}</label>
     <select id="company-language">{% for l in languages %}<option value="{{ l }}"{{ " selected" if l == company_language }}>{{ t("lang." ~ l) }}</option>{% endfor %}</select>
-    <p class="buttons"><button class="button primary">{{ t("common.save") }}</button></p>
-  </form>
+  </div>
   <p class="small">{{ t("settings.language_hint") }}</p>
 </section>
 
@@ -78,9 +77,12 @@ document.getElementById("claim-form").addEventListener("submit", async e => {
   e.preventDefault();
   if (await post("/settings/claim", {claim: document.getElementById("company-claim").value})) location.reload();
 });
-document.getElementById("language-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  if (await post("/settings/language", {language: document.getElementById("company-language").value})) location.reload();
+// Saved on choosing, like the sandbox switch; on failure the choice goes back.
+const language = document.getElementById("company-language");
+let savedLanguage = language.value;
+language.addEventListener("change", async () => {
+  if (await post("/settings/language", {language: language.value})) savedLanguage = language.value;
+  else language.value = savedLanguage;
 });
 document.getElementById("logo-form").addEventListener("submit", e => {
   e.preventDefault();
