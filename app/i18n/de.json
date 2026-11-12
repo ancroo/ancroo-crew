@@ -64,7 +64,7 @@
   "about.intro": "Ancroo Crew ist eine Weboberfläche für eine Firma aus KI-Mitarbeitern. Jeder Mitarbeiter ist ein Ordner mit Textdateien, und jeder Einsatz startet Claude Code in einem kurzlebigen Docker-Container.",
   "about.author": "Autor",
   "about.version": "Version",
-  "about.commit": "Gebaut aus dem Commit",
+  "about.commit": "Gebaut aus Commit",
   "about.modified": "mit Änderungen, die noch nicht committet waren",
   "about.version_unknown": "Unbekannt: Diese Installation wurde nicht mit deploy gebaut.",
   "about.license": "Lizenz",
