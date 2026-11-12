@@ -163,6 +163,11 @@ def language() -> str:
     return i18n.language(settings().get("language"))
 
 
+def set_language(lang: str) -> None:
+    """Applies to what employees write into the company from now on; files already written stay as they are."""
+    set_field(config.COMPANY_DIR / "company.md", "language", i18n.language(lang))
+
+
 def company_name() -> str:
     return settings().get("name", "")
 

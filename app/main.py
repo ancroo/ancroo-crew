@@ -579,7 +579,14 @@ def token(request: Request, kind: str = Body(embed=True), value: str = Body(embe
 
 @app.get("/settings", response_class=HTMLResponse)
 def settings_page(request: Request):
-    return page(request, "settings.html", {"logo_kb": company.LOGO_KB, "claim_length": company.CLAIM_LENGTH})
+    return page(request, "settings.html", {"logo_kb": company.LOGO_KB, "claim_length": company.CLAIM_LENGTH,
+                                           "languages": i18n.LANGUAGES, "company_language": company.language()})
+
+
+@app.post("/settings/language")
+def set_company_language(request: Request, language: str = Body(embed=True), person: str = Depends(actor)):
+    company.set_language(language)
+    return {"hint": hint(request, "language_changed", company.committed(f"Language changed by {person}"))}
 
 
 @app.post("/settings/name")

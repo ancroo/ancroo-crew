@@ -8,6 +8,7 @@
   <form class="form" id="setup">
     <label for="language">{{ t("setup.language") }}</label>
     <select id="language">{% for l in languages %}<option value="{{ l }}"{{ " selected" if l == lang }}>{{ t("lang." ~ l) }}</option>{% endfor %}</select>
+    <p class="small">{{ t("setup.language_hint") }}</p>
     <label for="company">{{ t("setup.company") }}</label>
     <input id="company" required maxlength="60">
     <label for="name">{{ t("setup.name") }}</label>

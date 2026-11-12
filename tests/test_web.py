@@ -418,6 +418,15 @@ def test_company_name_and_logo(firm):
         assert client.post("/settings/claim", json={"claim": ""}).status_code == 200
         assert company.claim() == "" and "firm-claim" not in client.get("/").text
 
+        # The language of the company can change; an unknown one falls back to the default like everywhere.
+        before = company.language()
+        other = next(lang for lang in i18n.LANGUAGES if lang != before)
+        assert client.post("/settings/language", json={"language": other}).json() == {"hint": None}
+        assert company.language() == other and f'<option value="{other}" selected>' in client.get("/settings").text
+        assert client.post("/settings/language", json={"language": "xx"}).status_code == 200
+        assert company.language() == i18n.DEFAULT
+        company.set_language(before)
+
         assert client.post("/settings/logo", json={"data": base64.b64encode(PNG).decode()}).status_code == 200
         assert (firm / "logo.png").read_bytes() == PNG
         page = client.get("/").text

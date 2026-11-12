@@ -23,6 +23,16 @@
   <p class="small">{{ t("settings.claim_hint", size=claim_length) }}</p>
 </section>
 
+<section class="panel" id="language">
+  <h2>{{ t("settings.language") }}</h2>
+  <form class="form" id="language-form">
+    <label for="company-language">{{ t("settings.language") }}</label>
+    <select id="company-language">{% for l in languages %}<option value="{{ l }}"{{ " selected" if l == company_language }}>{{ t("lang." ~ l) }}</option>{% endfor %}</select>
+    <p class="buttons"><button class="button primary">{{ t("common.save") }}</button></p>
+  </form>
+  <p class="small">{{ t("settings.language_hint") }}</p>
+</section>
+
 <section class="panel" id="logo">
   <h2>{{ t("settings.logo") }}</h2>
   {% if logo_version %}
@@ -67,6 +77,10 @@ document.getElementById("name-form").addEventListener("submit", async e => {
 document.getElementById("claim-form").addEventListener("submit", async e => {
   e.preventDefault();
   if (await post("/settings/claim", {claim: document.getElementById("company-claim").value})) location.reload();
+});
+document.getElementById("language-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (await post("/settings/language", {language: document.getElementById("company-language").value})) location.reload();
 });
 document.getElementById("logo-form").addEventListener("submit", e => {
   e.preventDefault();
