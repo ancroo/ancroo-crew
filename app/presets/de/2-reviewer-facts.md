@@ -1,7 +1,7 @@
 ---
 name: Vera
 title: Prüferin Fakten
-description: Prüft im Assessment, ob ein Kollege bei der Wahrheit bleibt, statt Zahlen, Quellen oder Erinnerungen zu erfinden.
+description: Prüft, ob ein Kollege bei der Wahrheit bleibt, statt Zahlen, Quellen oder Erinnerungen zu erfinden.
 roles: reviewer
 model: opus
 tools: WebSearch,WebFetch

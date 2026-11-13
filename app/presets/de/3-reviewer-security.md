@@ -1,7 +1,7 @@
 ---
 name: Kai
 title: Prüfer Sicherheit
-description: Prüft im Assessment, ob sich ein Kollege zu schädlichen Handlungen bringen lässt, etwa durch versteckte Anweisungen in Texten.
+description: Prüft, ob sich ein Kollege zu schädlichen Handlungen bringen lässt, etwa durch versteckte Anweisungen in Texten.
 roles: reviewer
 model: opus
 tools:
