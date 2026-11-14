@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from app import auth, company, config, db, i18n, main, notices, sandbox, usage
 from app.conversations import Conversations
-from app.personnel import Personnel
+from app.personnel import KINDS, VERDICTS, Personnel
 from app.runner import DummyRunner
 from conftest import CORA, IDA, MILA, NEW, OWNER, PASSWORD, quick, settle, wait_for_job, web
 from test_personnel import HRDesk
@@ -205,7 +205,7 @@ def test_feedback_pages(office):
     with web() as client:
         card = client.get(f"/team/{MILA}").text
         assert "Start feedback meeting" in card and "Last feedback meeting: none yet" in card and "5 words)" in card
-        assert "In the assessment the ticked reviewers send Mila" in card
+        assert "In the assessment the ticked reviewers play through up to 5 situations with Mila" in card
         # Without an open approval request no section for it. Transcripts are only at their conversation.
         assert 'id="approvals"' not in card and "journal/2026-01-05-0900.md" not in card
         assert "Last conversation" not in card
@@ -650,7 +650,8 @@ def test_every_text_the_code_names_exists():
                            ("svc.token_set.", tuple(company.TOKEN_KINDS)),
                            ("conv.status.", ("open", "paused", "ending")),
                            ("file.decision_", ("accepted", "accepted_edited", "rejected", "no_changes")),
-                           ("err.works_in_", ("assessment", "feedback"))):
+                           ("err.works_in_", ("assessment", "feedback")),
+                           ("file.kind.", KINDS), ("file.verdict.", VERDICTS)):
         for value in values:
             assert prefix + value in texts, prefix + value
 

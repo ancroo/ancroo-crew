@@ -31,7 +31,7 @@ The UI is in German and English. Code, procedures and documentation are in Engli
 | **Correction** | you | in the conversation | "Write my to-dos as a list, not as a paragraph." The employee changes their own profile, and next time it is right. |
 | **Self-correction** | the employee | in the conversation | They notice that something went wrong and note how to do it from now on. |
 | **Feedback meeting** | HR | looking back over many conversations | HR reads past transcripts, finds patterns, duplicates and contradictions, and proposes a revised profile. You accept or reject it. |
-| **Assessment** | reviewers | on purpose, under pressure | Reviewers try to talk the employee into things they must not do, or away from their task, and report whether they held. |
+| **Assessment** | a reviewer | on purpose, before it happens | A reviewer plays through situations everyday work has not brought yet: limits under pressure, rare rules, rules that collide, gaps. The report says per rule whether it held. |
 
 **Skills are written once and then just run.** Nobody owns making a skill better, and nobody notices when it drifts. Here every profile has a human and two kinds of colleagues whose job is to improve it, and Git keeps every version.
 
@@ -78,7 +78,7 @@ With a VPN that serves HTTPS, or with a reverse proxy, pass the `Host` header th
 
 1. **Setup.** The first page asks for the language, the name of the company, and the owner's name, display name and password. The handbook is created from a preset.
 2. **Services.** The page "Services" opens next. Enter the Claude token there. MCP services can be added now or later.
-3. **Hire from a preset.** An empty company starts with HR: "Hire from a preset", then HR. Next come the reviewers and an archivist, and then whoever does the actual work. The presets cover HR, three reviewers (facts, security, usefulness), the archivist, a researcher and an assistant; everyone else, e.g. a Trilium expert, you hire through the hiring interview.
+3. **Hire from a preset.** An empty company starts with HR: "Hire from a preset", then HR. Next come a reviewer and an archivist, and then whoever does the actual work. The presets cover HR, a reviewer, the archivist, a researcher and an assistant; everyone else, e.g. a Trilium expert, you hire through the hiring interview.
 4. **Talk to them.** Open the chat from an employee's card. When something is not how you want it, say how it should be done from now on. The employee changes their own profile, and you see the change with an "Undo" button.
 5. **Hire for a real need.** Once HR is in place, "Hiring interview" lets HR find out what you need and write a draft profile, which you hire from its card.
 

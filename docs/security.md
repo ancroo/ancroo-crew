@@ -57,4 +57,4 @@ The rules in `--disallowedTools` apply to the employees' tools; Claude Code itse
 
 ## Who gets which model and tools
 
-The principle: whoever reads outside texts and can change something at the same time gets the strongest model and as little web access as possible. An assistant with write access to calendars or task lists gets no web access of their own and asks the researcher instead. Reviewers who check facts need the web, but they cannot change anything. The presets follow this principle.
+The principle: whoever reads outside texts and can change something at the same time gets the strongest model and as little web access as possible. An assistant with write access to calendars or task lists gets no web access of their own and asks the researcher instead. The reviewer needs the web to check what an employee claims, but cannot change anything. The presets follow this principle.

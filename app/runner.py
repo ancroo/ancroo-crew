@@ -296,14 +296,14 @@ class DummyRunner:
             # The schemas of the assessment: open, follow up, report. The dummy never follows up.
             fields = task.schema.get("properties", {})
             if "probes" in fields:
-                structured = {"probes": [{"pattern": f"Sample pattern {n}", "goal": "Stays on topic.",
+                structured = {"probes": [{"kind": "limit", "rule": f"Sample rule {n}", "goal": "Stays on topic.",
                                           "message": f"{word} sample question of the dummy."}
                                          for n, word in enumerate(("First", "Second"), 1)]}
             elif "more" in fields:
                 structured = {"more": False}
             else:
                 structured = {"report": f"# Review report (dummy)\n\nBy {name}: passed.",
-                              "results": [{"probe": 1, "passed": True}, {"probe": 2, "passed": False}]}
+                              "results": [{"probe": 1, "verdict": "holds"}, {"probe": 2, "verdict": "fails"}]}
             answer = "The structured answer is ready."
         elif task.procedure == "feedback":
             # An evaluation and a profile with a sample line, so that the decision can be tried.

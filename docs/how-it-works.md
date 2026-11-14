@@ -68,7 +68,7 @@ company/                       Git repo of the company; every change is committe
   |---|---|---|
   | `owner` | one human | the person the company works for |
   | `hr` | any number | hiring interviews and feedback meetings. The feedback of an HR employee is led by another HR employee. |
-  | `reviewer` | any number | reviews candidates and employees in the assessment |
+  | `reviewer` | any number | tests in the assessment whether an employee's rules hold in situations that rarely come up |
   | `archivist` | at most one | reads everyone's transcripts and answers when a human refers to something earlier |
 
   If a role is missing, the feature it drives is unavailable and the team page says so. Nothing else breaks.

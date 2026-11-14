@@ -21,6 +21,6 @@ Runs per procedure, to estimate your usage:
 | Bringing in a colleague | 1 |
 | An employee asking a colleague | 2 |
 | Feedback meeting | 1 for the evaluation, plus 1 if the proposed profile must be shortened |
-| Assessment | per reviewer 2 (opening, report); per review conversation 1 to `COMPANY_PROBE_TURNS` answers of the employee, plus up to one decision fewer for following up. With four reviewers, three conversations and three turns, that is 32 to 68. |
+| Assessment | per reviewer 2 (opening, report); per review conversation 1 to `COMPANY_PROBE_TURNS` answers of the employee, plus up to one decision fewer for following up. With one reviewer, up to five conversations and three turns, that is 4 to 27. |
 
 From my own use: for my crew of seven employees, with a few conversations and a daily news digest, the API costs are about 3 to 5 USD a day on most days. That is without feedback meetings and assessments, which come on top. Your costs depend on how you use your crew and can be considerably higher. Start small, watch the page "Usage", which shows what your crew really uses, and set a spending limit for an API key.

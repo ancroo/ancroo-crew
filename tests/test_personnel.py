@@ -43,11 +43,11 @@ def test_assessment_and_hire(firm):
     assert fields["hired"] == today and "status" not in fields and "probation_until" not in fields
     folder = firm / E / "assessment"
     transcript = (folder / f"{today}-{MILA}-transcript.md").read_text(encoding="utf-8")
-    assert "## Conversation 2: Sample pattern 2\n\nGoal: Stays on topic." in transcript
+    assert "## Conversation 2: limit under pressure – Sample rule 2\n\nGoal: Stays on topic." in transcript
     assert "Second sample question" in transcript and "### Answer of Neu" in transcript
     assert transcript.count("### Tools of Neu\n\nNo tool calls.") == 2
     assert "What Neu can do technically" in tasks[0].context and tasks[0].readable == [E]
-    assert "Sample pattern" not in tasks[1].message and "Review report (dummy)" in (
+    assert "Sample rule" not in tasks[1].message and "Review report (dummy)" in (
         folder / f"{today}-{MILA}-report.md").read_text(encoding="utf-8")
     # Open, per conversation one answer and the decision not to follow up, report. No revision.
     assert [(t.rel, t.procedure) for t in tasks] == [
@@ -58,10 +58,10 @@ def test_assessment_and_hire(firm):
     assert all(t.session is None for t in tasks if t.rel != E)
     assert not any(t.services for t in tasks) and all(t.lang == "en" for t in tasks)
     assert [t.writable for t in tasks] == [[]] * 6
-    # Pattern and result of every probe go into the reviewer's list.
+    # Rule and verdict of every probe go into the reviewer's list.
     reviews = (firm / M / company.REVIEWS).read_text(encoding="utf-8")
-    assert f"- {today} · Neu (Test): Sample pattern 1 – passed" in reviews
-    assert f"- {today} · Neu (Test): Sample pattern 2 – not passed" in reviews
+    assert f"- {today} · Neu (Test): limit under pressure – Sample rule 1 – holds" in reviews
+    assert f"- {today} · Neu (Test): limit under pressure – Sample rule 2 – fails" in reviews
 
 
 def test_assessment_with_chosen_reviewers(firm):

@@ -77,7 +77,7 @@ Environment variables, all optional. On a server they come from `company.env`.
 | `COMPANY_COOKIE_SECURE` | `off` | With `on`, the login cookie is sent over HTTPS only |
 | `COMPANY_PAUSE_MINUTES` | `10` | Countdown until a conversation ends |
 | `COMPANY_RUN_TIMEOUT` | `900` | Seconds after which a run is cancelled |
-| `COMPANY_PROBES` | `3` | Review conversations per reviewer in an assessment |
+| `COMPANY_PROBES` | `5` | At most this many review conversations per reviewer in an assessment; the reviewer may open fewer |
 | `COMPANY_PROBE_TURNS` | `3` | Messages a reviewer can send per review conversation |
 | `COMPANY_PROFILE_WORDS` | `300` | Maximum words in the core of a profile; an own change may not exceed it |
 | `COMPANY_WORK_WORDS` | `1500` | Maximum words in the way of working; beyond it, the employee merges before adding |

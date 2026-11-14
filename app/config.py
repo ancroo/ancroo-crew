@@ -40,8 +40,9 @@ PAUSE_MINUTES = float(os.environ.get("COMPANY_PAUSE_MINUTES", "10"))
 
 BASE_TOOLS = "Read,Glob,Grep,Write,Edit"
 
-# Review conversations per reviewer in the assessment.
-PROBES = int(os.environ.get("COMPANY_PROBES", "3"))
+# At most this many review conversations per reviewer in the assessment. The reviewer picks the cases from the profile
+# and may open fewer.
+PROBES = int(os.environ.get("COMPANY_PROBES", "5"))
 # A reviewer sends at most this many messages in one review conversation. After each answer they decide whether to
 # follow up. 1: every probe message stands on its own.
 PROBE_TURNS = int(os.environ.get("COMPANY_PROBE_TURNS", "3"))
