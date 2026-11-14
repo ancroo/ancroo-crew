@@ -8,7 +8,7 @@
 
 **A self-hosted team of AI employees that work together like a company and get better on the job.**
 
-Each employee is a person with a name, a task, a personality that fits the task, and limits. They work in your calendar, task list or notes through MCP services, ask each other for help, and learn from you while you talk to them. HR hires new colleagues and holds feedback meetings, reviewers test them. You make the decisions.
+Each employee is a person with a name, a task, a personality that fits the task, and limits. They work in your calendar, task list or notes through MCP services, ask each other for help, and learn from you while you talk to them. HR hires new colleagues and holds feedback meetings, a reviewer tests whether their rules hold. You make the decisions.
 
 Under the hood, each employee is a folder of plain text files, and every answer is a *run*: [Claude Code](docs/how-it-works.md#claude-code-in-the-runs) starts in a short-lived Docker container, with a system prompt built from those files and only the folders and tools that employee is allowed to use.
 
