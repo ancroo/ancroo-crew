@@ -631,8 +631,8 @@ class Conversations:
         if "hr" in company.roles_of(rel):
             # Otherwise a draft ends up in the own folder, and nobody is created as a candidate.
             context += ("\n- You create new colleagues only in a hiring interview. A human starts it in the web UI on "
-                        "the team page with “Hire”. In this conversation you can prepare a hire, but you cannot "
-                        "create anyone as a candidate.")
+                        "the team page with the button for the hiring interview. In this conversation you can prepare "
+                        "a hire, but you cannot create anyone as a candidate.")
         return {"procedure": "conversation", "writable": [rel], "protected": company.protected_in_own(rel),
                 "context": context}
 
