@@ -51,7 +51,7 @@ The split is deliberate: whoever can change your data cannot read the web, and w
 
 - **A Claude credential:** a token from `claude setup-token` for your Claude subscription (run once wherever you have Claude Code), or an Anthropic API key (see [Billing](docs/billing.md)). Without one, no employee can answer.
 - **A Linux server with Docker and the Docker Compose plugin**, reachable over SSH with a key or an SSH certificate. The SSH user must be in the group `docker`. To reach the UI through an SSH tunnel, the SSH server must allow local port forwarding (`AllowTcpForwarding`); otherwise put a reverse proxy of your own in front (see [Install](#install)).
-- **Memory and disk.** The service itself needs about 60 MB of RAM; `deploy` limits it to 512 MB. Each run is a container of its own, limited by `COMPANY_RUN_MEMORY` (768 MB in the example settings), and runs of different employees can happen at the same time. The images take about 1 GB of disk, plus older ones kept for rollback. A VPS with 2 vCPUs and 4 GB RAM runs two installations side by side.
+- **Memory and disk.** The service itself needs about 60 MB of RAM; `deploy` limits it to 512 MB and one CPU. Each run is a container of its own, limited by `COMPANY_RUN_MEMORY` (768 MB in the example settings), and runs of different employees can happen at the same time. The images take about 1 GB of disk, plus older ones kept for rollback. A VPS with 2 vCPUs and 4 GB RAM runs two installations side by side.
 - **On your machine:** a checkout of this repository, `git` and `ssh`. Nothing else is installed locally.
 - **Optional: MCP services.** [MCP](https://modelcontextprotocol.io) servers give employees tools such as a calendar or a task list. They run as containers of their own on the same server.
 

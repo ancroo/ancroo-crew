@@ -14,14 +14,14 @@ A new channel only calls `send`, `bring_in`, `stop`, `pause`, `resume`, `end`, `
 
 Ancroo Crew does not talk to the Claude API itself. Every answer of an employee is one run of Anthropic's [Claude Code](https://code.claude.com) CLI, unmodified, in a Docker container of its own.
 
-**The image.** `deploy` builds the image `<NAME>-agent` on the server from [`agent/Dockerfile`](../agent/Dockerfile): `node:26-slim` with `git`, `ripgrep` and `npm install -g @anthropic-ai/claude-code`. The version is not pinned, and the image is built without cache, so every deploy installs the latest Claude Code and prints its version. That also means a deploy can bring a new version of Claude Code even if this code did not change. The auto-updater inside the image is switched off (`DISABLE_AUTOUPDATER=1`), so the version stays fixed until the next deploy. You do not install Claude Code anywhere yourself; the service starts the containers through the Docker socket of the server.
+**The image.** `deploy` builds the image `<NAME>-agent` on the server from [`agent/Dockerfile`](../agent/Dockerfile): `node:26-slim` with `git`, `ripgrep` and `npm install -g @anthropic-ai/claude-code`. The version is not pinned, and the image is built without cache, so every deploy installs the latest Claude Code and prints its version. That also means a deploy can bring a new version of Claude Code even if this code did not change. The auto-updater inside the image is switched off (`DISABLE_AUTOUPDATER=1`), so the version stays fixed until the next deploy. Claude Code's own auto memory is switched off too (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`): an employee's memory is only their profile. You do not install Claude Code anywhere yourself; the service starts the containers through the Docker socket of the server.
 
 **A run.** For each answer the service starts `docker run --rm` with the image and runs in it, roughly:
 
 ```
-claude -p --session-id <id> | --resume <id>      # one Claude Code session per conversation
+claude -p --session-id <id> | --resume <id> | --no-session-persistence   # a session per conversation, none for jobs
        --output-format stream-json --verbose --include-partial-messages
-       --system-prompt-file /prompt.md            # built from profile, handbook, team, humans and procedure
+       --system-prompt-file /prompt.md --system-prompt-snapshot off   # built from profile, handbook, team, humans, procedure
        --add-dir /company --tools Read,Glob,Grep,Write,Edit[,WebSearch,WebFetch]
        --allowedTools ... --disallowedTools 'Read(//proc/**)' ...
        [--mcp-config /mcp.json --strict-mcp-config] [--model haiku|sonnet|opus] [--json-schema ...]
@@ -53,7 +53,10 @@ company/                       Git repo of the company; every change is committe
 │   ├── agreement.md           what the human agreed to in the hiring interview: purpose and success
 │   ├── journal/               word-for-word transcripts of their conversations
 │   ├── assignments/           what they did in colleagues' conversations
-│   ├── assessment/  feedback/
+│   ├── assessment/            transcripts and reports of the review conversations
+│   ├── feedback/<date-time>/  per meeting: evaluation.md, proposed profile.md and work.md, decision.md,
+│   │                          brief.md, led-by.txt, for HR employees track-record.md
+│   ├── reviews.md             for a reviewer: rule and verdict of every earlier probe
 │   └── edits.md               what humans changed in their files
 ├── candidates/0007/           drafts from the hiring interview
 ├── archive/0005-2026-10-12/   dismissed employees and discarded drafts
@@ -72,7 +75,7 @@ company/                       Git repo of the company; every change is committe
   | `archivist` | at most one | reads everyone's transcripts and answers when a human refers to something earlier |
 
   If a role is missing, the feature it drives is unavailable and the team page says so. Nothing else breaks.
-- The **database** (`data/company.db`, SQLite) holds the operational data: conversations, messages, runs, jobs, usage, approval requests, schedules, notices, passwords and logins. What defines someone is in files; the database is expendable history.
+- The **database** (`data/company.db`, SQLite) holds the operational data: conversations, messages, runs, jobs, usage, approval requests, own profile changes and their decisions, schedules, notices, favorites, passwords and logins. What defines someone is in files; the database is expendable history.
 - The **procedures** (`app/procedures/*.md`) are part of the code and come with every update. Each run copies them to `runtime/procedures` and mounts them. They are in English only; every run is told which language to write in.
 - The **presets** (`app/presets/<lang>/`) are the handbook and profiles for typical roles, in German and English. They are copied into the company once and belong to it from then on.
 - Git commits use `git add -A`: at the end of a conversation or job, everything pending in the company goes into the commit.

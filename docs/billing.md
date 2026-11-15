@@ -19,7 +19,7 @@ Runs per procedure, to estimate your usage:
 |---|---|
 | Message in the chat | 1, plus 1 if an own change to the profile was too long. Ending a conversation costs no run |
 | Bringing in a colleague | 1 |
-| An employee asking a colleague | 2 |
+| An employee asking a colleague | 2. An ask beyond `COMPANY_ASKS` per message costs 1 more run, in which the employee is told to answer without it |
 | Feedback meeting | 1 for the evaluation, plus 1 if the proposed profile must be shortened |
 | Assessment | per reviewer 2 (opening, report); per review conversation 1 to `COMPANY_PROBE_TURNS` answers of the employee, plus up to one decision fewer for following up. With one reviewer, up to five conversations and three turns, that is 4 to 27. |
 

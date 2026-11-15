@@ -6,7 +6,7 @@ Updating, backups, services, a second installation and uninstalling, plus all se
 
 `git pull`, then `./deploy`. If you changed the code yourself, commit and run the tests first; `deploy` also sends uncommitted changes to tracked files. Open conversations survive the restart; runs that were cut off are marked as failed. Procedures and presets come with the code. The company itself is only ever changed by the UI, the employees and, once the data layout changes, by migrations that run on start after a backup.
 
-- `./deploy --rollback` goes back to the image of the previous deploy (`deploys.log` in the base folder lists them). It goes back one step only: a second `--rollback` right after the first undoes it. The data stays as it is.
+- `./deploy --rollback` goes back to the image of the previous deploy (`deploys.log` in the base folder lists them). It goes back one step only: a second `--rollback` right after the first undoes it. The data stays as it is, and so does the image for the runs: Claude Code keeps the version of the latest deploy.
 - `./deploy --reset-password` asks for a new owner password and ends all their logins. The UI cannot do this, because you are locked out.
 - `./deploy --force` deploys even while an employee is running.
 
