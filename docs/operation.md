@@ -51,11 +51,13 @@ There is no `deploy` option for this; it is a few commands on the server, run as
 
 1. **Keep what you want to keep.** Copy `/opt/company/backups` off the server, or the whole folder `company/`, which is a Git repository with the full history of your crew. Everything below deletes it for good.
 2. **Stop and remove the service:** `docker compose -f /opt/company/compose.yml down`. Run containers remove themselves when they end.
-3. **Remove the network of the runs:** first detach your MCP services (`docker network disconnect company-agents my-mcp`), then `docker network rm company-agents`.
+3. **Remove the network of the runs:** first detach your MCP services (`docker network disconnect company-agents my-mcp`), then `docker network rm company-agents`. `docker network inspect company-agents --format '{{range .Containers}}{{.Name}} {{end}}'` lists what is attached.
 4. **Remove the images:** `docker images --format '{{.Repository}}:{{.Tag}}' | grep -E '^company(-agent)?:' | xargs -r docker image rm`. The pattern matches only this installation, not e.g. `company2`.
 5. **Remove the data:** `rm -rf /opt/company`. Under `/opt` removing the folder itself needs root; its contents belong to the SSH user.
 
 Finally, delete `company.env` in your checkout; it holds the server address of this installation.
+
+**Starting over** with an empty company is uninstalling plus [installing](../README.md#install) again, keeping `company.env`. The MCP services can stay: after the new `./deploy`, attach them to the network of the runs again and add them on the page "Services" again (see [Services for the employees](#services-for-the-employees), steps 2 and 3), because the old entries were deleted with the data.
 
 ## Settings
 
