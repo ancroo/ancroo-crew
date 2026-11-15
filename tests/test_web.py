@@ -278,7 +278,7 @@ def test_without_hr_hiring_starts_from_a_preset(firm):
         team = client.get("/").text
         assert "/hiring" not in team and "nobody – without HR" in team
         hire = client.get("/hire").text
-        assert "HR (hiring, onboarding, feedback)" in hire and 'id="form"' not in hire
+        assert "HR (hiring, feedback)" in hire and 'id="form"' not in hire
         form = client.get("/hire?preset=1-hr").text
         assert 'id="form"' in form and "Paula" in form and "You are responsible for the humans" in form
         assert 'id="form"' in client.get("/hire?preset=own").text
