@@ -529,6 +529,7 @@
   "err.service_type": "The type is http or sse.",
   "err.service_url": "The address starts with http:// or https://.",
   "err.service_header": "A header name consists of letters, digits and -.",
+  "err.service_header_name": "A value needs the name of its header, usually Authorization.",
   "err.service_header_value": "The header needs a value.",
   "err.token_kind": "Unknown kind of token.",
   "err.token_value": "The token must not be empty and contains no spaces.",

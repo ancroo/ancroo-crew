@@ -1394,6 +1394,8 @@ def save_service(name: str, kind: str, url: str, description: str, blocked: str,
     service.update({"type": kind, "url": url.strip(), "description": " ".join(description.split()),
                     "blocked": split_list(blocked)})
     header_name = header_name.strip()
+    if header_value.strip() and not header_name:
+        raise Invalid("service_header_name")
     if header_name:
         if not re.fullmatch(r"[A-Za-z0-9-]+", header_name):
             raise Invalid("service_header")

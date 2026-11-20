@@ -54,7 +54,7 @@
       <label for="s-blocked">{{ t("svc.blocked_comma") }}</label>
       <input id="s-blocked" autocomplete="off" spellcheck="false">
       <label for="s-header">{{ t("svc.header_name") }}</label>
-      <input id="s-header" placeholder="Authorization" autocomplete="off" spellcheck="false">
+      <input id="s-header" value="Authorization" autocomplete="off" spellcheck="false">
       <label for="s-value">{{ t("svc.header_value") }}</label>
       <input id="s-value" type="password" placeholder="Bearer …" autocomplete="off">
       <p class="buttons"><button class="button primary">{{ t("common.save") }}</button></p>
@@ -88,7 +88,7 @@ document.querySelectorAll("[data-fill]").forEach(button => button.addEventListen
   document.getElementById("s-type").value = s.type;
   document.getElementById("s-url").value = s.url;
   document.getElementById("s-blocked").value = s.blocked.join(",");
-  document.getElementById("s-header").value = s.headers[0] || "";
+  document.getElementById("s-header").value = s.headers[0] || "Authorization";
   document.getElementById("s-value").value = "";
   document.getElementById("service-details").open = true;
 }));

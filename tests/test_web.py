@@ -409,6 +409,11 @@ def test_services_page(firm):
                                               "header_name": "Authorization", "header_value": "Bearer cal"}).status_code == 200
         assert "calendar" in client.get("/services").text and "Bearer cal" not in client.get("/services").text
         assert client.post("/services", json={"name": "x y", "url": "http://a"}).status_code == 409
+        # A value without the name of its header is refused, not dropped; the form starts with "Authorization".
+        answer = client.post("/services", json={"name": "calendar", "url": "http://cal:8000/mcp", "header_value": "Bearer x"})
+        assert answer.status_code == 409 and "Authorization" in answer.json()["detail"]
+        assert company.mcp_json()["calendar"]["headers"] == {"Authorization": "Bearer cal"}
+        assert 'id="s-header" value="Authorization"' in client.get("/services").text
         assert client.post("/services/calendar/delete").status_code == 200
         assert client.post("/services/calendar/delete").status_code == 404
         assert client.post("/token", json={"kind": "api", "value": "sk-ant-api03-1"}).json() == {"token": "api"}

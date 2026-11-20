@@ -529,6 +529,7 @@
   "err.service_type": "Der Typ ist http oder sse.",
   "err.service_url": "Die Adresse beginnt mit http:// oder https://.",
   "err.service_header": "Eine Kopfzeile heißt nur mit Buchstaben, Ziffern und -.",
+  "err.service_header_name": "Ein Wert braucht den Namen seiner Kopfzeile, meist Authorization.",
   "err.service_header_value": "Die Kopfzeile braucht einen Wert.",
   "err.token_kind": "Unbekannte Art von Token.",
   "err.token_value": "Das Token darf nicht leer sein und enthält keine Leerzeichen.",
