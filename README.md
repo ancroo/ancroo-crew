@@ -81,6 +81,7 @@ With a VPN that serves HTTPS, or with a reverse proxy, pass the `Host` header th
 3. **Hire from a preset.** An empty company starts with HR: "Hire from a preset", then HR. Next come a reviewer and an archivist, and then whoever does the actual work. The presets cover HR, a reviewer, the archivist, a researcher and an assistant; everyone else, e.g. a Trilium expert, you hire through the hiring interview.
 4. **Talk to them.** Open the chat from an employee's card. When something is not how you want it, say how it should be done from now on. The employee changes their own profile, and you see the change with an "Undo" button.
 5. **Hire for a real need.** Once HR is in place, "Hiring interview" lets HR find out what you need and write a draft profile, which you hire from its card.
+6. **Put them on your phone.** With HTTPS (e.g. `tailscale serve`), the chat with an employee can go on the home screen as an app of its own, and messages can be dictated. Step by step for Android and the iPhone: [On the phone](docs/operation.md#on-the-phone).
 
 <p>
   <a href="assets/screenshots/ancroo-crew-ai-employee.png"><img src="assets/screenshots/ancroo-crew-ai-employee.png" alt="The card of the AI employee Lio: key facts, profile, agreement, feedback meeting and conversations" width="400"></a>
@@ -93,7 +94,7 @@ With a VPN that serves HTTPS, or with a reverse proxy, pass the `Host` header th
 ## Documentation
 
 - [Features](docs/features.md): chat, profiles and their changes, colleagues, hiring, feedback, assessment, administration
-- [Operation](docs/operation.md): update, backups, MCP services, a second installation, uninstall, settings, login, other channels
+- [Operation](docs/operation.md): update, backups, MCP services, a second installation, uninstall, settings, the phone, login, other channels
 - [How it works](docs/how-it-works.md): layers of the code, how Claude Code is installed and run, the files of the company, IDs, roles, database
 - [Security](docs/security.md): what leaves your server, the risks, what is blocked technically
 - [Billing](docs/billing.md): credentials, when runs start, runs per procedure

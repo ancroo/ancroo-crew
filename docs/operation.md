@@ -93,6 +93,30 @@ Environment variables, all optional. On a server they come from `company.env`.
 
 `deploy` sets `COMPANY_DIR`, `COMPANY_DB`, `COMPANY_BACKUPS` and `COMPANY_RUN_PREFIX` itself from `BASE` and `NAME`, and also `COMPANY_NETWORK` and `COMPANY_IMAGE` unless the settings file sets them. The address and port of the UI inside its container are fixed by the image, and so is `COMPANY_VERSION`, the commit `deploy` built it from, shown on the page "About".
 
+## On the phone
+
+The chat with an employee can sit on the phone's home screen as an app of its own, with the employee's name under the icon, and messages can be dictated instead of typed (see [Features](features.md#working-with-employees)).
+
+**What it needs:** the phone reaches the UI over HTTPS. An SSH tunnel does not work here, and without HTTPS the browser offers neither the app nor the microphone. The simplest way is Tailscale: `tailscale serve` on the server (see [Reaching the UI](../README.md#reaching-the-ui)), and the Tailscale app on the phone, signed in to the same tailnet and switched on.
+
+**Android (Chrome):**
+
+1. Open the HTTPS address of the UI in Chrome, e.g. `https://server.your-tailnet.ts.net:8443`, and log in.
+2. Open the card of the employee and from there the chat.
+3. Tap the menu ⋮ at the top right, then the entry for installing the page (in a German Chrome "Installieren und Verknüpfung erstellen"; older versions say "Add to home screen"). In the dialog that follows, tap "Install" ("Installieren"): only then does the chat open without the browser bar.
+4. The icon is now on the home screen; it opens this chat directly. Repeat steps 2 and 3 for every employee you want there.
+5. Tap the microphone next to "Send" the first time and allow Chrome to use the microphone. Speak, pause, and the text is in the field; correct it if needed and send. If you denied access by mistake: Chrome menu ⋮ → Settings → Site settings → Microphone, and allow the address there.
+
+**iPhone (Safari):**
+
+1. Open the HTTPS address of the UI in Safari and log in.
+2. Open the card of the employee and from there the chat.
+3. Tap the share button (square with an arrow), then "Add to Home Screen", keep or change the name, and tap "Add".
+4. Open the new icon and log in once more: on the iPhone, an app from the home screen does not share the login with Safari.
+5. Tap the microphone next to "Send" and allow access. If the button does not appear or does not react, use the microphone key of the iPhone keyboard; it writes into the same field.
+
+The app is the same page as in the browser: it needs the connection (on with Tailscale), and it shows the login page again once the login has ended. The audio of the microphone button goes to the maker of the browser, Google or Apple (see [Security](security.md#what-leaves-your-server)).
+
 ## Login
 
 - Every human logs in with their name or display name and a password. Before the setup, only the setup page is reachable; afterwards, only the login page.
