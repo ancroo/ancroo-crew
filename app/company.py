@@ -51,7 +51,8 @@ WEB_TOOLS = ("WebSearch", "WebFetch")
 EXTRA_TOOLS = WEB_TOOLS
 # Log of what a human changed in the files of an employee through the UI.
 EDITS = "edits.md"
-EDIT_KINDS = ("private", "factual", "other")
+# The kind of a human's change, optional: "" is no statement and comes first in the editor.
+EDIT_KINDS = ("", "addition", "factual", "tidy", "private", "other")
 MODELS = ("", "haiku", "sonnet", "opus")
 # Roles of employees.
 ROLES = ("hr", "reviewer", "archivist")
@@ -1200,9 +1201,13 @@ def _edits_note(rel: str) -> str:
     new = [e for e in edits(rel) if e["when"].replace(" ", "-").replace(":", "") > latest]
     if not new:
         return ""
-    kinds = {"private": "private details removed", "factual": "factual correction", "other": "other"}
-    listed = "; ".join(f"{e['path']} ({kinds.get(e['kind'], e['kind'])}{': ' + e['reason'] if e['reason'] else ''})"
-                       for e in new[::-1])
+    kinds = {"addition": "added", "factual": "factual correction", "tidy": "shortened or tidied",
+             "private": "private details removed", "other": "other"}
+
+    def notes(e: dict) -> str:
+        return ": ".join(x for x in (kinds.get(e["kind"], e["kind"]), e["reason"]) if x)
+
+    listed = "; ".join(e["path"] + (f" ({notes(e)})" if notes(e) else "") for e in new[::-1])
     who = ", ".join(sorted({display_name(e["person"]) for e in new}))
     return (f"\n- {who} changed something in your folder since your last conversation: {listed}. "
             "This is no criticism of you. The current version applies. Do not bring it up yourself and do not repeat "

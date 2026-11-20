@@ -14,7 +14,7 @@
     {% if kinds %}
     <label for="kind">{{ t("edit.kind") }}</label>
     <select id="kind">
-      {% for kind in kinds %}<option value="{{ kind }}">{{ t("edit.kind." ~ kind) }}</option>{% endfor %}
+      {% for kind in kinds %}<option value="{{ kind }}">{{ t("edit.kind." ~ (kind or "none")) }}</option>{% endfor %}
     </select>
     <label for="reason">{{ t("edit.reason") }}</label>
     <input id="reason" type="text" maxlength="300" autocomplete="off">

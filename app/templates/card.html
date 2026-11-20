@@ -272,7 +272,7 @@
       <tr>
         <td>{{ e.when }}</td>
         <td data-label="{{ t("card.file") }}"><a href="/team/{{ c.id }}/file?path={{ e.path | urlencode }}">{{ e.path }}</a></td>
-        <td data-label="{{ t("card.kind") }}">{{ t("edit.kind." ~ e.kind) }}</td>
+        <td data-label="{{ t("card.kind") }}">{{ t("edit.kind." ~ e.kind) if e.kind else "–" }}</td>
         <td data-label="{{ t("card.who") }}">{{ names.get(e.person, e.person) }}</td>
         <td data-label="{{ t("card.reason") }}">{{ e.reason or "–" }}</td>
       </tr>

@@ -672,7 +672,7 @@ def test_every_text_the_code_names_exists():
     for prefix, values in (("role.", company.ROLES), ("status.", ("candidate", "employee")),
                            ("profile.note.", ("applied", "proposed", "too_long", "undone", "accepted", "discarded")),
                            ("profile.state.", ("applied", "proposed", "too_long", "undone", "accepted", "discarded")),
-                           ("edit.kind.", company.EDIT_KINDS), ("usage.kind.", usage.KINDS),
+                           ("edit.kind.", [k or "none" for k in company.EDIT_KINDS]), ("usage.kind.", usage.KINDS),
                            ("usage.purpose.", usage.PURPOSES), ("lang.", i18n.LANGUAGES),
                            ("team.role_missing.", company.ROLES[0:]), ("folder.", ("assignments", "assessment",
                                                                                     "journal", "feedback")),

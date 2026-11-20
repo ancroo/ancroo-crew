@@ -447,3 +447,12 @@ def test_human_creates_and_deletes_a_special_instruction(firm):
     assert company.playbook_parts(rel) == [] and company.playbook_index(rel) == ""
     with pytest.raises(FileNotFoundError):
         company.for_editing(rel, "playbooks/other/x.md")
+
+
+def test_an_edit_without_kind(firm):
+    rel = f"employees/{MILA}"
+    assert company.EDIT_KINDS[0] == ""
+    _, version = company.for_editing(rel, company.WORK)
+    company.edit(rel, company.WORK, "- A rule.", "", "", OWNER, version)
+    assert company.edits(rel)[0]["kind"] == ""
+    assert "your folder since your last conversation: work.md." in company._edits_note(rel)
