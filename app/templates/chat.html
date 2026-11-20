@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% set hiring = kind == "hiring" %}
+{% set app_name = c.name %}
 {% block title %}{{ t("chat.title_hiring" if hiring else "chat.title", name=c.name) }}{% endblock %}
 {% block crumbs %}<a href="/">{{ t("nav.team") }}</a> › <a href="/team/{{ c.id }}">{{ c.name }}</a> › {% if fixed %}{{ t("chat.crumb_hiring_of" if hiring else "chat.crumb_of", when=conv.started | datetime) }}{% elif hiring %}{{ t("chat.crumb_hiring") }}{% else %}{{ t("team.chat") }}{% endif %}{% endblock %}
 {% block main_class %}chat-page{% endblock %}
@@ -38,6 +39,11 @@
         {% for colleague in colleagues %}<option value="{{ colleague.id }}" data-name="{{ colleague.name }}">{{ t("chat.bring_in", name=colleague.name) }}</option>{% endfor %}
       </select>
       {% endif %}
+      {# Dictation through the speech recognition of the browser; chat.js shows the button only where it exists. #}
+      <button class="button mic" type="button" id="mic" aria-pressed="false" aria-label="{{ t("chat.dictate") }}"
+              title="{{ t("chat.dictate") }}" hidden><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <button class="button primary" type="submit">{{ t("chat.send") }}</button>
     </span>
   </form>
@@ -46,6 +52,7 @@
 <script type="application/json" id="chat-texts">{{ {
   "writing": t("chat.writing"), "paused": t("chat.paused"), "ending": t("chat.ending"), "ended": t("chat.ended"),
   "ends_in": t("chat.ends_in"), "using": t("chat.using"), "send_failed": t("chat.send_failed"),
-  "reopen_failed": t("chat.reopen_failed")} | tojson }}</script>
+  "reopen_failed": t("chat.reopen_failed"),
+  "dictate": t("chat.dictate"), "dictate_stop": t("chat.dictate_stop"), "dictate_failed": t("chat.dictate_failed")} | tojson }}</script>
 <script src="/static/chat.js?v={{ script_version }}"></script>
 {% endblock %}

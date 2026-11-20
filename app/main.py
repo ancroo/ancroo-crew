@@ -207,7 +207,7 @@ async def check_login(request: Request, call_next):
         if wants_html:
             return RedirectResponse("/setup", 303)
         return JSONResponse({"detail": i18n.t(lang_of(request), "err.not_set_up")}, 409)
-    free = path.startswith("/channel/") or path in ("/login", "/logout", "/logo")
+    free = path.startswith("/channel/") or path in ("/login", "/logout", "/logo", "/manifest.webmanifest")
     if not free and not request.state.person:
         if wants_html:
             return RedirectResponse(f"/login?next={quote(path)}", 303)
@@ -687,6 +687,23 @@ def logo(request: Request):
         raise HTTPException(404, i18n.t(lang_of(request), "err.no_logo"))
     return FileResponse(file, media_type=company.LOGO_TYPES[file.suffix[1:]],
                         headers={"Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff"})
+
+
+@app.get("/manifest.webmanifest")
+def manifest(start: str = "/", name: str = ""):
+    """Makes a page a home screen app of its own, e.g. the chat with one employee.
+
+    Reachable without a login, because the browser fetches it without the cookie. It names nothing the page does not
+    pass in; "start" stays on this site.
+    """
+    if not start.startswith("/") or start.startswith("//") or "\\" in start:
+        start = "/"
+    name = name.strip()[:60] or company.company_name() or "Ancroo Crew"
+    icons = [{"src": f"/static/icons/icon-{size}.png", "sizes": f"{size}x{size}", "type": "image/png"}
+             for size in (192, 512)]
+    return JSONResponse({"name": name, "short_name": name, "id": start, "start_url": start, "scope": "/",
+                         "display": "standalone", "background_color": "#ffffff", "theme_color": "#ffffff",
+                         "icons": icons}, media_type="application/manifest+json")
 
 
 # ---------------------------------------------------------------- Web chat

@@ -415,6 +415,30 @@ def test_services_page(firm):
         assert client.post("/token", json={"kind": "api", "value": ""}).status_code == 409
 
 
+def test_home_screen_app(firm):
+    """A page added to the home screen opens as an app of its own; the chat with an employee carries the name."""
+    with web() as client:
+        page = client.get(f"/chat/{MILA}").text
+        assert f'href="/manifest.webmanifest?start=/chat/{MILA}&amp;name=Mila"' in page
+        assert '<meta name="apple-mobile-web-app-title" content="Mila">' in page
+        assert 'id="mic"' in page and "/static/icons/icon-192.png" in page
+        assert "name=Test%20Company" in client.get("/").text
+
+        client.post("/logout")
+        # Reachable without a login, because the browser fetches it without the cookie.
+        answer = client.get("/manifest.webmanifest", params={"start": f"/chat/{MILA}", "name": "Mila"})
+        assert answer.status_code == 200 and answer.headers["content-type"] == "application/manifest+json"
+        data = answer.json()
+        assert data["start_url"] == data["id"] == f"/chat/{MILA}" and data["name"] == "Mila"
+        assert data["display"] == "standalone" and [i["sizes"] for i in data["icons"]] == ["192x192", "512x512"]
+        for icon in data["icons"]:
+            assert client.get(icon["src"]).status_code == 200
+        # The start stays on this site.
+        for foreign in ("https://evil.example/", "//evil.example/", "/\\evil.example/", "chat"):
+            assert client.get("/manifest.webmanifest", params={"start": foreign}).json()["start_url"] == "/"
+        assert client.get("/manifest.webmanifest").json()["name"] == "Test Company"
+
+
 PNG = b"\x89PNG\r\n\x1a\n" + b"\0" * 32
 
 

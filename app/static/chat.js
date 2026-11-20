@@ -106,7 +106,43 @@ function connect() {
   });
 }
 
+// Dictation through the speech recognition of the browser (Chrome sends the audio to Google, Safari to Apple). One
+// tap listens until a pause; the text lands in the field, so it can be corrected before sending.
+const mic = document.getElementById("mic");
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let listening = null;
+
+function listen(on) {
+  mic.classList.toggle("listening", on);
+  mic.setAttribute("aria-pressed", String(on));
+  mic.title = say(on ? "dictate_stop" : "dictate");
+  mic.setAttribute("aria-label", mic.title);
+}
+
+function dictate() {
+  const recognition = new Recognition();
+  recognition.lang = document.documentElement.lang;
+  recognition.interimResults = true;
+  const before = field.value.trim() ? field.value.trimEnd() + " " : "";
+  recognition.addEventListener("result", e => {
+    field.value = before + Array.from(e.results, result => result[0].transcript).join("");
+  });
+  recognition.addEventListener("error", e => {
+    if (!["no-speech", "aborted"].includes(e.error)) { field.value = before; field.placeholder = say("dictate_failed"); }
+  });
+  recognition.addEventListener("end", () => { listening = null; listen(false); });
+  recognition.start();
+  listening = recognition;
+  listen(true);
+}
+
+if (Recognition) {
+  mic.hidden = false;
+  mic.addEventListener("click", () => listening ? listening.stop() : dictate());
+}
+
 async function send() {
+  listening?.abort();
   const text = field.value.trim();
   if (!text) return;
   field.value = "";

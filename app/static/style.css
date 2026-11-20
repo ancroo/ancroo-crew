@@ -256,6 +256,11 @@ details.below { margin-top: 1.2rem; }
 .search { display: flex; gap: .6rem; margin-bottom: .8rem; }
 .search input { flex: 1; min-width: 0; }
 .composer[hidden] + .key-hint { display: none; }
+.send .mic { display: inline-flex; align-items: center; justify-content: center; }
+.send .mic[hidden] { display: none; }
+.send .mic.listening { color: var(--surface); background: var(--warn); border-color: var(--warn); animation: listening 1.4s ease-in-out infinite; }
+@keyframes listening { 50% { opacity: .65; } }
+@media (prefers-reduced-motion: reduce) { .send .mic.listening { animation: none; } }
 
 /* Finger instead of mouse: larger tap targets, no hint on keyboard shortcuts. */
 @media (pointer: coarse) {
