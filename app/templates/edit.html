@@ -5,7 +5,7 @@
 {% block content %}
 <section class="panel">
   <h2>{{ t("edit.heading_before") }} <code>{{ path }}</code> {{ t("edit.heading_after") }}</h2>
-  {% if c %}<p class="small">{{ t("edit.hint", name=c.name) }}{% if path == "profile.md" %} {{ t("edit.header_stays") }}{% endif %}</p>
+  {% if c %}<p class="small">{{ t("edit.hint", name=c.name) }}{% if path == "profile.md" %} {{ t("edit.header_stays") }}{% elif path.startswith("playbooks/") %} {{ t("edit.playbook_hint") }}{% endif %}</p>
   {% elif path == "handbook.md" %}<p class="small">{{ t("edit.handbook_hint") }}</p>
   {% else %}<p class="small">{{ t("edit.about_hint") }}</p>{% endif %}
   <form id="edit" class="form" data-version="{{ version }}">

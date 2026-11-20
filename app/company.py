@@ -13,6 +13,7 @@ import shutil
 import socket
 import subprocess
 import threading
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
@@ -691,12 +692,84 @@ def set_header(rel: str, fields: dict[str, str]) -> list[str]:
 PARTS = (PROFILE, WORK)
 
 
+# Special instructions: playbooks/<name>.md in the own folder, a procedure for one kind of request each. The prompt
+# lists them by their first line; the employee reads one only when a request of its kind comes, so that they do not
+# mix. Otherwise they are parts like the two above: the same rules for own changes, versions and feedback.
+PLAYBOOKS = "playbooks"
+PLAYBOOK_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
+PLAYBOOK_LENGTH = 60
+SUMMARY_LENGTH = 200
+
+
+def is_playbook(part: str) -> bool:
+    folder, _, name = part.partition("/")
+    return folder == PLAYBOOKS and len(name) <= PLAYBOOK_LENGTH and bool(PLAYBOOK_NAME.match(name))
+
+
+def is_part(part: str) -> bool:
+    return part in PARTS or is_playbook(part)
+
+
+def playbook_parts(rel: str) -> list[str]:
+    """The special instructions of an employee, as parts relative to their folder ("playbooks/<name>.md")."""
+    folder = config.COMPANY_DIR / rel / PLAYBOOKS
+    if not folder.is_dir() or folder.is_symlink():
+        return []
+    return [f"{PLAYBOOKS}/{p.name}" for p in sorted(folder.iterdir())
+            if is_playbook(f"{PLAYBOOKS}/{p.name}") and p.is_file() and not p.is_symlink()]
+
+
+def all_parts(rel: str) -> list[str]:
+    """All parts of an employee's profile: core, way of working and the special instructions."""
+    return [*PARTS, *playbook_parts(rel)]
+
+
+def playbook_part(name: str) -> str:
+    """The part for a special instruction a human names, e.g. "KI-Veranstaltungen" → playbooks/ki-veranstaltungen.md."""
+    text = name.strip().lower()
+    for umlaut, plain in (("ä", "ae"), ("ö", "oe"), ("ü", "ue"), ("ß", "ss")):
+        text = text.replace(umlaut, plain)
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+    slug = re.sub(r"[^a-z0-9]+", "-", text).strip("-")[:PLAYBOOK_LENGTH - 3].strip("-")
+    if not slug:
+        raise Invalid("playbook_name")
+    return f"{PLAYBOOKS}/{slug}.md"
+
+
+def summary(text: str) -> str:
+    """What the prompt shows of a special instruction: its first line, without the marks of a heading."""
+    line = next((line.strip() for line in text.splitlines() if line.strip()), "")
+    line = " ".join(line.lstrip("#").split())
+    return line if len(line) <= SUMMARY_LENGTH else line[:SUMMARY_LENGTH].rstrip() + " …"
+
+
+def playbook_index(rel: str) -> str:
+    """The section of the prompt that lists the special instructions. Empty without any."""
+    found = playbook_parts(rel)
+    if not found:
+        return ""
+    lines = "\n".join(f"- /company/{rel}/{part}: {summary(part_text(rel, part))}" for part in found)
+    return ("# Your special instructions\n\n"
+            "Each is a procedure for one kind of request. When a request is of such a kind, read that one file before "
+            "you start on it and follow it; it applies together with your way of working. Read only one: if two seem "
+            "to fit, ask which is meant. For other requests read none of them.\n\n" + lines + "\n")
+
+
+def part_name(lang: str | None, part: str) -> str:
+    """How a human reads the name of a part: core, way of working or the special instruction by its name."""
+    if is_playbook(part):
+        return i18n.t(lang, "part.playbook", name=part.split("/", 1)[1].removesuffix(".md"))
+    return i18n.t(lang, f"part.{part}")
+
+
 def part_limit(part: str) -> int:
+    if is_playbook(part):
+        return config.PLAYBOOK_WORDS
     return config.PROFILE_WORDS if part == PROFILE else config.WORK_WORDS
 
 
 def part_text(rel: str, part: str, content: str | None = None) -> str:
-    """The text of a part: of the core what is below the header, of the way of working everything."""
+    """The text of a part: of the core what is below the header, of the others everything."""
     if content is None:
         file = config.COMPANY_DIR / rel / part
         content = file.read_text(encoding="utf-8") if file.is_file() else ""
@@ -719,16 +792,26 @@ def own_profile_note(rel: str, person_name: str) -> str:
              "way of working, unless the handbook or the core already says them. The header between the --- lines (name, title, model, tools, services, roles) only a "
              f"human changes; changes there are put back. {sizes}. When and how you change them, the handbook says "
              "under Memory.")
+    rules += (f"\n- Special instructions are part of your profile as well: {folder}/{PLAYBOOKS}/<name>.md, the name "
+              "in lowercase letters, digits and hyphens. One holds the procedure for one kind of request, e.g. a "
+              "recurring search with fixed sources, steps and form of the answer. Create one when the human asks you "
+              "to keep such a procedure, or when it would otherwise take a large share of your way of working and is "
+              "needed only for that kind of request. What applies to every request stays in the way of working. The "
+              "first line says in one sentence for which requests it is; later you see only that line until you read "
+              f"the file. Each has at most {config.PLAYBOOK_WORDS} words. Change one only after reading it; emptying "
+              "the file deletes it. Other files in that folder are removed.")
     if self_edit(rel):
-        return (f"\n- You can change both parts of your profile. A change applies from your next answer on. "
-                f"{person_name} sees every change in the chat with the difference and can undo it." + rules)
-    return (f"\n- Changes to your profile need {person_name}'s confirmation. Make them in the files as usual: the "
-            f"service then puts them back and shows {person_name} the difference to accept." + rules)
+        return (f"\n- You can change both parts of your profile and your special instructions. A change applies from "
+                f"your next answer on. {person_name} sees every change in the chat with the difference and can undo "
+                "it." + rules)
+    return (f"\n- Changes to your profile and your special instructions need {person_name}'s confirmation. Make them "
+            f"in the files as usual: the service then puts them back and shows {person_name} the difference to "
+            "accept." + rules)
 
 
 # In a conversation the own folder is writable. Only these entries are meant to change; everything else in it is
 # mounted read-only on top, and what is new afterwards is removed.
-OWN_WRITABLE = PARTS
+OWN_WRITABLE = (*PARTS, PLAYBOOKS)
 
 
 def own_snapshot(rel: str) -> dict:
@@ -737,8 +820,18 @@ def own_snapshot(rel: str) -> dict:
     if not (folder / WORK).is_file():
         # It exists before the run, so that a new way of working is a change like any other.
         (folder / WORK).write_text("", encoding="utf-8")
-    return {"parts": {part: (folder / part).read_text(encoding="utf-8") for part in PARTS},
+    _playbook_folder(rel)
+    return {"parts": {part: (folder / part).read_text(encoding="utf-8") for part in all_parts(rel)},
             "entries": {p.name for p in folder.iterdir()}}
+
+
+def _playbook_folder(rel: str) -> Path:
+    """The folder of the special instructions. It exists before a run, so that it is mounted writable."""
+    folder = config.COMPANY_DIR / rel / PLAYBOOKS
+    if folder.is_symlink() or (folder.exists() and not folder.is_dir()):
+        _remove(folder)
+    folder.mkdir(exist_ok=True)
+    return folder
 
 
 # Folders the service writes into while the employee may be running, e.g. an assignment for a colleague. They exist
@@ -751,6 +844,7 @@ def protected_in_own(rel: str) -> list[str]:
     folder = config.COMPANY_DIR / rel
     for name in SERVICE_FOLDERS:
         (folder / name).mkdir(exist_ok=True)
+    _playbook_folder(rel)
     return [f"{rel}/{p.name}" for p in sorted(folder.iterdir()) if p.name not in OWN_WRITABLE]
 
 
@@ -770,22 +864,30 @@ def take_own_change(rel: str, snapshot: dict) -> list[dict]:
     """After a run in the own folder: put back what may not change and say what became of each part of the profile.
 
     The header is always put back. A change of a text stays if the employee may change it themselves and it does not
-    make the part longer than allowed; otherwise the file is put back as well. Per changed part: "part", "state"
-    ("applied", "proposed", "too_long" or "header_only"), "before" and "after" (the texts), "words" and "limit".
+    make the part longer than allowed; otherwise the file is put back as well. A special instruction may also be new
+    (before "") or deleted (after ""). Per changed part: "part", "state" ("applied", "proposed", "too_long" or
+    "header_only"), "before" and "after" (the texts), "words" and "limit".
     """
     folder = config.COMPANY_DIR / rel
     for path in folder.iterdir():
         if path.name not in snapshot["entries"]:
             _remove(path)
+    books = _playbook_folder(rel)
+    for path in books.iterdir():
+        # Only files named as a special instruction; a link would make the service read somewhere else.
+        if not is_playbook(f"{PLAYBOOKS}/{path.name}") or path.is_symlink() or not path.is_file():
+            _remove(path)
+    before_parts = {**snapshot["parts"], **{p: "" for p in playbook_parts(rel) if p not in snapshot["parts"]}}
     changes = []
-    for part, before in snapshot["parts"].items():
+    for part, before in before_parts.items():
         file = folder / part
+        playbook = is_playbook(part)
         # A link or a folder instead of the file would make the service read or write somewhere else.
-        if file.is_symlink() or not file.is_file():
+        if not playbook and (file.is_symlink() or not file.is_file()):
             _remove(file)
             file.write_text(before, encoding="utf-8")
             continue
-        now = file.read_text(encoding="utf-8")
+        now = file.read_text(encoding="utf-8") if file.is_file() else ""
         if now == before:
             continue
         old, new = part_text(rel, part, before), part_text(rel, part, now)
@@ -799,9 +901,18 @@ def take_own_change(rel: str, snapshot: dict) -> list[dict]:
             state = "proposed"
         else:
             state = "applied"
-        file.write_text(_content(part, before, new) if state == "applied" else before, encoding="utf-8")
+        _write_part(file, _content(part, before, new) if state == "applied" else before, playbook)
         changes.append({**change, "state": state})
     return changes
+
+
+def _write_part(file: Path, content: str, playbook: bool) -> None:
+    """Write a part. An empty special instruction does not exist."""
+    if playbook and not content.strip():
+        file.unlink(missing_ok=True)
+        return
+    file.parent.mkdir(exist_ok=True)
+    file.write_text(content, encoding="utf-8")
 
 
 def replace_text(rel: str, part: str, expected: str, text: str) -> bool:
@@ -810,7 +921,7 @@ def replace_text(rel: str, part: str, expected: str, text: str) -> bool:
     old = file.read_text(encoding="utf-8") if file.is_file() else ""
     if part_text(rel, part, old) != expected.strip("\n"):
         return False
-    file.write_text(_content(part, old, text), encoding="utf-8")
+    _write_part(file, _content(part, old, text), is_playbook(part))
     return True
 
 
@@ -855,7 +966,7 @@ def _header_only(rel: str, commit_id: str, path: str) -> bool:
 
 def profile_version(rel: str, commit_id: str, part: str = PROFILE) -> dict:
     """The text of a part in one version and the difference to the version before."""
-    if part not in PARTS:
+    if not is_part(part):
         raise Unknown("unknown_version", version=commit_id[:8])
     found = next((v for v in profile_versions(rel, part, 200) if v["commit"] == commit_id), None)
     if not found:
@@ -1012,9 +1123,11 @@ def _employee_file(rel: str, path: str) -> tuple[Path, bool]:
     if not target.is_relative_to(folder):
         raise FileNotFoundError(path)
     # The agreement and the way of working may be missing yet, e.g. after hiring from a preset; they then start empty.
-    if not target.is_file() and path not in (AGREEMENT, WORK):
+    # A special instruction a human creates is new as well.
+    missing_is_fine = path in (AGREEMENT, WORK) or is_playbook(path)
+    if not target.is_file() and not missing_is_fine:
         raise FileNotFoundError(path)
-    return target, path in (AGREEMENT, WORK)
+    return target, missing_is_fine
 
 
 def for_editing(rel: str | None, path: str) -> tuple[str, str]:
@@ -1055,8 +1168,7 @@ def edit(rel: str, path: str, text: str, kind: str, reason: str, person_id: str,
         raise Invalid("changed_meanwhile")
     if new == old:
         raise Invalid("nothing_changed")
-    file.parent.mkdir(exist_ok=True)
-    file.write_text(new, encoding="utf-8")
+    _write_part(file, new, is_playbook(path))
     log = config.COMPANY_DIR / rel / EDITS
     if not log.is_file():
         lang = language()
@@ -1141,10 +1253,11 @@ def feedback_state(rel: str) -> dict:
             "last": next((m["meeting"] for m in meetings if not m["open"]), "")}
 
 
-def feedback_material(rel: str, since: str) -> dict[str, list[str]]:
+def feedback_material(rel: str, since: str, used: list[str] = ()) -> dict[str, list[str]]:
     """What the feedback meeting reads, relative to the company: transcripts, assignments and review reports since the
-    last meeting, of each only the latest FEEDBACK_CONVERSATIONS. Files are named by date, "since" like a meeting."""
-    material = {}
+    last meeting, of each only the latest FEEDBACK_CONVERSATIONS, and of the special instructions those named in
+    "used" that still exist. Files are named by date, "since" like a meeting."""
+    material = {"playbooks": [f"{rel}/{part}" for part in playbook_parts(rel) if part in used]}
     for name, pattern in (("journal", "*.md"), ("assignments", "*.md"), ("assessment", "*-report.md")):
         folder = config.COMPANY_DIR / rel / name
         found = sorted(p.name for p in folder.glob(pattern)) if folder.is_dir() else []
@@ -1182,25 +1295,26 @@ def hr_track_record(hr_id: str, since: str) -> str:
 
 
 def _parts_version(rel: str) -> str:
-    return _version("\x00".join(part_text(rel, part) for part in PARTS))
+    return _version("\x00".join(f"{part}\x00{part_text(rel, part)}" for part in all_parts(rel)))
 
 
 def feedback_proposal(rel: str, meeting: str) -> dict | None:
     """What the meeting proposes for the parts of the profile, if it differs from the current text. Only the text
-    counts; a header in the proposal is never taken over. "version" covers both parts."""
+    counts; a header in the proposal is never taken over. A special instruction is proposed only if it exists.
+    "version" covers all parts."""
     folder = feedback_dir(rel, meeting)
-    parts = []
-    for part in PARTS:
+    proposed = []
+    for part in all_parts(rel):
         if not (folder / part).is_file():
             continue
         text, current = part_text(rel, part, (folder / part).read_text(encoding="utf-8")), part_text(rel, part)
         if text == current:
             continue
-        parts.append({"part": part, "text": text, "diff": text_diff(current, text), "words_before": words(current),
-                      "words": words(text), "limit": part_limit(part),
-                      "header_changed": part == PROFILE and header(folder / PROFILE) not in (
-                          {}, header(config.COMPANY_DIR / rel / PROFILE))})
-    return {"version": _parts_version(rel), "parts": parts} if parts else None
+        proposed.append({"part": part, "text": text, "diff": text_diff(current, text),
+                         "words_before": words(current), "words": words(text), "limit": part_limit(part),
+                         "header_changed": part == PROFILE and header(folder / PROFILE) not in (
+                             {}, header(config.COMPANY_DIR / rel / PROFILE))})
+    return {"version": _parts_version(rel), "parts": proposed} if proposed else None
 
 
 def feedback_decide(rel: str, meeting: str, accept: bool, texts: dict[str, str] | None = None,
@@ -1228,7 +1342,7 @@ def feedback_decide(rel: str, meeting: str, accept: bool, texts: dict[str, str] 
                 writes.append((p["part"], _content(p["part"], file.read_text(encoding="utf-8") if file.is_file()
                                                    else "", text), text != p["text"]))
         for part, content, changed in writes:
-            (config.COMPANY_DIR / rel / part).write_text(content, encoding="utf-8")
+            _write_part(config.COMPANY_DIR / rel / part, content, is_playbook(part))
             if changed:
                 # The meeting's folder then holds what really applies. The original proposal stays in Git.
                 (folder / part).write_text(content, encoding="utf-8")
@@ -1478,6 +1592,7 @@ def build_prompt(rel: str, procedure_name: str, context: str, readable: list[str
         "",
         part_text(rel, WORK),
         "",
+        *([index, ""] if (index := playbook_index(rel)) else []),
         "# Handbook of the company",
         "",
         handbook.read_text(encoding="utf-8").rstrip("\n") if handbook.is_file() else "(none)",

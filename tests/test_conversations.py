@@ -950,3 +950,31 @@ def test_too_long_change_gets_one_more_run(firm, monkeypatch):
         assert [m["sender_kind"] for m in service.messages(cid)].count("agent") == 1
         assert not service.remarks.get(cid)
     asyncio.run(flow())
+
+
+class Consulting(Recording):
+    """Dummy that reads a special instruction, as Claude Code would through Read."""
+
+    async def run(self, task):
+        yield {"kind": "call", "name": "Read", "detail": f"/company/{task.rel}/playbooks/ai-events.md"}
+        yield {"kind": "call", "name": "Read", "detail": f"/company/{task.rel}/work.md"}
+        async for e in super().run(task):
+            yield e
+
+
+def test_reading_a_special_instruction_is_noted(firm):
+    books = firm / M / company.PLAYBOOKS
+    books.mkdir()
+    (books / "ai-events.md").write_text("For requests about AI events.\n", encoding="utf-8")
+
+    async def flow():
+        service = Conversations(Consulting())
+        cid = service.send(MILA, OWNER, "Any AI events next month?")["conversation_id"]
+        await settle(service)
+        service.send(MILA, OWNER, "And in December?")
+        await settle(service)
+        with db.connect() as con:
+            rows = con.execute("SELECT conversation_id, employee, playbook FROM playbook_uses").fetchall()
+        assert [tuple(r) for r in rows] == [(cid, MILA, "playbooks/ai-events.md")]
+        assert "special instruction" in service.runner.tasks[0].context
+    asyncio.run(flow())

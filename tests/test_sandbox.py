@@ -62,7 +62,7 @@ def test_sandbox_view_in_the_web_ui(firm):
             time.sleep(0.02)
         run = sandbox.board.runs[0]
         assert run["employee"] == MILA and run["status"] == "done" and run["purpose"] == "conversation"
-        assert run["checked"] == [f"{M}/profile.md", f"{M}/work.md"]
+        assert run["checked"] == [f"{M}/profile.md", f"{M}/work.md", f"{M}/playbooks"]
         page = client.get("/sandbox").text
         assert f'id="run-{run["id"]}"' in page and "WebSearch" in page and "Secret appointment" not in page
 

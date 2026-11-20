@@ -100,8 +100,10 @@
 
 <section class="panel" id="profile">
   <h2>{{ t("card.profile") }}</h2>
-  {% for p in parts %}{% set key = "core" if loop.first else "work" %}
-  <h3 class="sub" id="{{ key }}">{{ t("part." ~ p.part) | capitalize }}</h3>
+  {% for p in parts %}{% set key = "core" if loop.index == 1 else "work" if loop.index == 2 else "playbook-" ~ p.part[10:-3] %}
+  {% if loop.index == 3 %}<h3 class="sub" id="playbooks">{{ t("card.playbooks") }}</h3>{% endif %}
+  <h3 class="sub" id="{{ key }}">{{ part_name(p.part) | capitalize }}</h3>
+  {% if p.summary %}<p class="small">{{ p.summary }}</p>{% endif %}
   {% if p.text %}
   <details>
     <summary>{{ t("card.read_part", words=p.words) }}{% if p.words > p.limit %}{{ t("card.too_long", limit=p.limit) }}{% endif %})</summary>
@@ -125,6 +127,14 @@
   </details>
   {% endif %}
   {% endfor %}
+  {% if parts | length == 2 %}<h3 class="sub" id="playbooks">{{ t("card.playbooks") }}</h3>
+  <p class="empty">{{ t("card.playbooks_empty") }}</p>{% endif %}
+  <form class="form below" method="get" action="/team/{{ c.id }}/playbook">
+    <label for="playbook-name">{{ t("card.playbook_new") }}</label>
+    <p class="buttons"><input id="playbook-name" name="name" type="text" maxlength="50" required autocomplete="off" placeholder="{{ t("card.playbook_placeholder") }}">
+      <button class="button" type="submit">{{ t("card.playbook_create") }}</button></p>
+  </form>
+  <p class="small">{{ t("card.playbooks_hint", name=c.name, words=config.PLAYBOOK_WORDS) }}</p>
   <p class="small">{{ t("card.parts_hint", core=config.PROFILE_WORDS, work=config.WORK_WORDS) }} {% if not c.candidate %}{{ t("card.profile_hint_yes" if c.self_edit else "card.profile_hint_no", name=c.name) }} {% endif %}{{ t("card.versions_hint", name=c.name) }}</p>
 </section>
 

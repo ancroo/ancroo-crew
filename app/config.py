@@ -51,6 +51,9 @@ PROBE_TURNS = int(os.environ.get("COMPANY_PROBE_TURNS", "3"))
 # room. If a feedback proposal is longer, HR shortens it in one more run.
 PROFILE_WORDS = int(os.environ.get("COMPANY_PROFILE_WORDS", "300"))
 WORK_WORDS = int(os.environ.get("COMPANY_WORK_WORDS", "1500"))
+# Words of one special instruction (playbooks/<name>.md): a procedure for one kind of request that the employee reads
+# only when such a request comes. The same rules for own changes as for the two parts.
+PLAYBOOK_WORDS = int(os.environ.get("COMPANY_PLAYBOOK_WORDS", "1500"))
 # The feedback meeting reads at most this many of the latest transcripts since the last meeting, and as many
 # assignments and review reports.
 FEEDBACK_CONVERSATIONS = int(os.environ.get("COMPANY_FEEDBACK_CONVERSATIONS", "20"))

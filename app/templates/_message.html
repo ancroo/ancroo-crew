@@ -5,7 +5,7 @@
 </details>
 {% elif m.sender_kind == "profile" %}{% set change = profile_change(m.id) %}{% set state = change.state if change else "applied" %}
 <details class="message profile" id="m-{{ m.id }}" data-id="{{ m.id }}"{{ " open" if state == "proposed" }}>
-  <summary>{{ names.get(m.sender, m.sender) }} · {{ m.created | clock }} · {{ t("profile.note." ~ state, what=t("part." ~ (change.part if change else "profile.md"))) }}</summary>
+  <summary>{{ names.get(m.sender, m.sender) }} · {{ m.created | clock }} · {{ t("profile.note." ~ state, what=part_name(change.part if change else "profile.md")) }}</summary>
   <pre class="diff">{{ m.text | diff }}</pre>
   {% if state == "applied" %}<p class="buttons"><button class="button" data-profile-change="{{ m.id }}" data-action="undo">{{ t("profile.undo") }}</button></p>
   {% elif state == "proposed" %}<p class="buttons"><button class="button primary" data-profile-change="{{ m.id }}" data-action="accept">{{ t("profile.accept") }}</button> <button class="button" data-profile-change="{{ m.id }}" data-action="discard">{{ t("profile.discard") }}</button></p>{% endif %}

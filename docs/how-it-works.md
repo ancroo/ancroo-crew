@@ -50,11 +50,12 @@ company/                       Git repo of the company; every change is committe
 │   ├── profile.md             header (name, title, roles, model, tools, services, self_edit, hired) and the core:
 │   │                          task, personality, limits
 │   ├── work.md                the way of working: rules, methods, facts
+│   ├── playbooks/<name>.md    special instructions: the procedure for one kind of request each
 │   ├── agreement.md           what the human agreed to in the hiring interview: purpose and success
 │   ├── journal/               word-for-word transcripts of their conversations
 │   ├── assignments/           what they did in colleagues' conversations
 │   ├── assessment/            transcripts and reports of the review conversations
-│   ├── feedback/<date-time>/  per meeting: evaluation.md, proposed profile.md and work.md, decision.md,
+│   ├── feedback/<date-time>/  per meeting: evaluation.md, proposed parts of the profile, decision.md,
 │   │                          brief.md, led-by.txt, for HR employees track-record.md
 │   ├── reviews.md             for a reviewer: rule and verdict of every earlier probe
 │   └── edits.md               what humans changed in their files

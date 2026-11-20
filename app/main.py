@@ -107,6 +107,14 @@ def _tn(context, key: str, n: int, **params) -> str:
 
 
 templates.env.globals["t"] = _t
+
+
+@pass_context
+def _part_name(context, part: str) -> str:
+    return company.part_name(context.get("lang"), part)
+
+
+templates.env.globals["part_name"] = _part_name
 templates.env.globals["tn"] = _tn
 templates.env.filters["number"] = pass_context(lambda c, n, digits=0: _number(n, c.get("lang"), digits))
 templates.env.filters["usd"] = pass_context(lambda c, n: _number(n, c.get("lang"), 2) + " $")
@@ -343,8 +351,9 @@ def employee_card(request: Request, some_id: str):
         "hr": [company.name_of(f"employees/{h}") for h in company.holders("hr") if h != some_id],
         "names": _names(), "config": config,
         "parts": [{"part": part, "text": company.part_text(rel, part), "words": company.words(company.part_text(rel, part)),
-                   "limit": company.part_limit(part), "versions": company.profile_versions(rel, part)}
-                  for part in company.PARTS],
+                   "limit": company.part_limit(part), "versions": company.profile_versions(rel, part),
+                   "summary": company.summary(company.part_text(rel, part)) if company.is_playbook(part) else ""}
+                  for part in company.all_parts(rel)],
         "agreement": company.read(rel, company.AGREEMENT) if (config.COMPANY_DIR / rel / company.AGREEMENT).is_file()
         else "", "agreement_path": company.AGREEMENT,
         "folders": {name: company.files(rel, name) for name in ("assignments", "assessment")},
@@ -378,6 +387,17 @@ def file_page(request: Request, some_id: str, path: str):
     return page(request, "file.html", {
         "title": path, "back": f"/team/{some_id}", "back_name": card["name"], "content": content,
         "edit": f"/team/{some_id}/edit?path={quote(path)}" if company.editable(path) else None})
+
+
+@app.get("/team/{some_id}/playbook")
+def new_playbook(request: Request, some_id: str, name: str):
+    """A special instruction by the name a human gives it: the editor for it, empty if it is new."""
+    _card(request, some_id)
+    try:
+        part = company.playbook_part(name)
+    except Problem as error:
+        raise problem(request, error)
+    return RedirectResponse(f"/team/{some_id}/edit?path={quote(part)}", 303)
 
 
 @app.get("/team/{some_id}/edit", response_class=HTMLResponse)
@@ -1059,7 +1079,7 @@ def feedback_diff(request: Request, some_id: str, meeting: str, text: str = Body
                   part: str = Body(company.PROFILE, embed=True)):
     """Difference between a current part of the profile and the proposal as the human edited it."""
     card = _card(request, some_id)
-    if part not in company.PARTS:
+    if not company.is_part(part):
         raise HTTPException(404, i18n.t(lang_of(request), "err.no_such_file"))
     return {"diff": company.text_diff(company.part_text(card["rel"], part), text.replace("\r\n", "\n").strip("\n")),
             "words": company.words(text)}

@@ -83,6 +83,7 @@ Environment variables, all optional. On a server they come from `company.env`.
 | `COMPANY_PROBE_TURNS` | `3` | Messages a reviewer can send per review conversation |
 | `COMPANY_PROFILE_WORDS` | `300` | Maximum words in the core of a profile; an own change may not exceed it |
 | `COMPANY_WORK_WORDS` | `1500` | Maximum words in the way of working; beyond it, the employee merges before adding |
+| `COMPANY_PLAYBOOK_WORDS` | `1500` | Maximum words in one special instruction (`playbooks/<name>.md`) |
 | `COMPANY_FEEDBACK_CONVERSATIONS` | `20` | Latest transcripts, assignments and review reports the feedback meeting reads |
 | `COMPANY_ASKS` | `3` | Asks between colleagues per human message; `0` switches them off |
 | `COMPANY_ASK_WAIT` | `120` | Seconds an ask waits for a busy colleague |

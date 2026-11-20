@@ -691,3 +691,22 @@ def test_translation_helpers():
     assert i18n.t("en", "err.name_taken") .count("{name}") == 1  # a missing value stays visible
     assert i18n.tn("de", "log.calls", 1) == "1 Werkzeugaufruf" and i18n.tn("en", "log.calls", 3) == "3 tool calls"
     assert i18n.from_header("fr-FR,de;q=0.8") == "de" and i18n.from_header(None) == "en"
+
+
+def test_special_instructions_on_the_card(firm):
+    with web() as client:
+        card = client.get(f"/team/{MILA}").text
+        assert "No special instructions yet." in card
+        answer = client.get(f"/team/{MILA}/playbook", params={"name": "AI events"}, follow_redirects=False)
+        assert answer.status_code == 303 and answer.headers["location"] == f"/team/{MILA}/edit?path=playbooks/ai-events.md"
+        assert "Saving it empty deletes" in client.get(answer.headers["location"]).text
+        assert client.get(f"/team/{MILA}/playbook", params={"name": "!!"}).status_code == 409
+        _, version = company.for_editing(f"employees/{MILA}", "playbooks/ai-events.md")
+        assert client.post(f"/team/{MILA}/edit", json={"path": "playbooks/ai-events.md", "kind": "other",
+                                                       "text": "For requests about AI events.\n\nSteps.",
+                                                       "version": version}).status_code == 200
+        card = client.get(f"/team/{MILA}").text
+        assert "Special instruction “ai-events”" in card and "For requests about AI events." in card
+        commit = company.profile_versions(f"employees/{MILA}", "playbooks/ai-events.md")[0]["commit"]
+        page = client.get(f"/team/{MILA}/profile/{commit}", params={"part": "playbooks/ai-events.md"})
+        assert page.status_code == 200 and "special instruction “ai-events”" in page.text

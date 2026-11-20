@@ -151,6 +151,15 @@ CREATE TABLE IF NOT EXISTS notices (              -- what an employee left for a
 );
 CREATE INDEX IF NOT EXISTS notices_person ON notices(person, read);
 
+CREATE TABLE IF NOT EXISTS playbook_uses (        -- an employee read a special instruction in a conversation
+    conversation_id INTEGER NOT NULL REFERENCES conversations(id),
+    employee        TEXT NOT NULL,
+    playbook        TEXT NOT NULL,                -- the part, e.g. playbooks/ai-events.md
+    used            REAL NOT NULL,
+    PRIMARY KEY (conversation_id, playbook)
+);
+CREATE INDEX IF NOT EXISTS playbook_uses_employee ON playbook_uses(employee, used);
+
 CREATE TABLE IF NOT EXISTS favorites (
     person    TEXT NOT NULL,
     employee  TEXT NOT NULL,

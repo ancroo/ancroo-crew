@@ -459,7 +459,7 @@ class Conversations:
             elif m["sender_kind"] == "profile":
                 change = self.profile_change(m["id"])
                 state = i18n.t(lang, f"profile.state.{change['state']}") if change else ""
-                what = i18n.t(lang, f"part.{change['part'] if change else company.PROFILE}")
+                what = company.part_name(lang, change["part"] if change else company.PROFILE)
                 parts.append(f"**{i18n.t(lang, 'file.own_change_of', name=self._name(m['sender']), what=what, state=state)}:**"
                              f"\n\n```diff\n{m['text']}\n```")
             elif m["sender_kind"] in ("human", "agent"):
@@ -711,6 +711,8 @@ class Conversations:
         if calls:
             # Comes before the answer it belongs to, and stays also after a cancelled run.
             self._note(cid, "tools", who, self.tool_log(calls, company.person_language(self.get(cid)["person"])))
+        if kind == "conversation":
+            self._playbooks_read(cid, task.rel, calls)
         changes = await self._own_change(cid, task.rel, own) if own is not None else []
         end = {**end, "own": changes}
         if stopped:
@@ -728,6 +730,19 @@ class Conversations:
                     con.execute("UPDATE conversations SET claude_session = ? WHERE id = ?", (str(uuid.uuid4()), cid))
             raise asyncio.CancelledError
         return end
+
+    @staticmethod
+    def _playbooks_read(cid: int, rel: str, calls: list[dict]) -> None:
+        """Note which of their special instructions the employee read, so that the feedback meeting looks at them. Only
+        in their own conversations: what an asked colleague does there is no work with the instruction."""
+        prefix = f"/company/{rel}/"
+        used = {c["detail"][len(prefix):] for c in calls if c["name"] == "Read" and c["detail"].startswith(prefix)}
+        used = [part for part in used if company.is_playbook(part)]
+        if used:
+            employee = rel.split("/")[1]
+            with db.connect() as con:
+                con.executemany("INSERT OR IGNORE INTO playbook_uses (conversation_id, employee, playbook, used) "
+                                "VALUES (?, ?, ?, ?)", [(cid, employee, part, time.time()) for part in used])
 
     # ------------------------------------------------------------ Own changes to the profile
 

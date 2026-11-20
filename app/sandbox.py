@@ -149,8 +149,9 @@ class Board:
                "purpose": purpose, "procedure": task.procedure, "started": time.time(), "seconds": None,
                "status": "running", "cage": describe(command), "calls": [], "denied": [], "cost": None,
                "error": None,
-               # The two parts of the own profile stay writable; the service checks them after the run.
-               "checked": [f"{task.rel}/{part}" for part in company.PARTS] if task.rel in task.writable else []}
+               # The parts of the own profile stay writable; the service checks them after the run.
+               "checked": [f"{task.rel}/{part}" for part in company.OWN_WRITABLE] if task.rel in task.writable
+               else []}
         run["tree"] = tree(run["cage"], run["checked"])
         self.runs.appendleft(run)
         self._tell(run)

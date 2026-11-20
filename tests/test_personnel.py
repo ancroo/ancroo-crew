@@ -557,3 +557,51 @@ def test_daily_backup(firm, monkeypatch):
     old = config.BACKUPS / "2020-01-01-031500"
     old.mkdir()
     assert backup.prune() == ["2020-01-01-031500"] and backup.latest() == folder.name
+
+
+def test_feedback_looks_at_special_instructions_in_use(office):
+    books = office / company.PLAYBOOKS
+    books.mkdir()
+    (books / "ai-events.md").write_text("For AI events.\n\n- Old step.\n", encoding="utf-8")
+    (books / "trips.md").write_text("For trips.\n", encoding="utf-8")
+
+    class Sharpening(DummyRunner):
+        delay = 0
+
+        def __init__(self):
+            self.tasks = []
+
+        async def run(self, task):
+            self.tasks.append(task)
+            async for e in super().run(task):
+                if e["kind"] == "end" and task.procedure == "feedback":
+                    target = config.COMPANY_DIR / task.writable[0] / company.PLAYBOOKS
+                    target.mkdir(exist_ok=True)
+                    (target / "ai-events.md").write_text("For AI events.\n\n- Better step.\n", encoding="utf-8")
+                    (target / "new-one.md").write_text("Made up.\n", encoding="utf-8")
+                yield e
+
+    async def flow():
+        runner = Sharpening()
+        personnel = Personnel(Conversations(runner))
+        cid = personnel.conversations.send(MILA, OWNER, "Hello")["conversation_id"]
+        await settle(personnel.conversations)
+        personnel.conversations._playbooks_read(cid, M, [{"name": "Read",
+                                                           "detail": f"/company/{M}/playbooks/ai-events.md"}])
+        assert personnel.playbooks_used(MILA, "") == ["playbooks/ai-events.md"]
+        assert personnel.playbooks_used(MILA, "2999-01-01-0000") == []
+        personnel.start_feedback(MILA, OWNER)
+        await settle(personnel.conversations)
+        message = next(t.message for t in runner.tasks if t.procedure == "feedback")
+        assert f"Special instructions used in conversations: /company/{M}/playbooks/ai-events.md" in message
+        assert "trips.md" not in message
+        meeting = company.feedback_state(M)["open"]
+        proposal = company.feedback_proposal(M, meeting)
+        # Only an instruction that exists is proposed; a new one from HR is not taken over.
+        proposed = [p["part"] for p in proposal["parts"]]
+        assert "playbooks/ai-events.md" in proposed and "playbooks/new-one.md" not in proposed
+        await personnel.decide_feedback(MILA, meeting, True, version=proposal["version"])
+
+    asyncio.run(flow())
+    assert "Better step" in (books / "ai-events.md").read_text(encoding="utf-8")
+    assert not (books / "new-one.md").exists()

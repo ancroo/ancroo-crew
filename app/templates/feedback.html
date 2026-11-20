@@ -34,7 +34,7 @@
   {% if proposal %}
   {% for p in proposal.parts %}
   <div class="proposal" data-part="{{ p.part }}">
-  <h3 class="sub">{{ t("part." ~ p.part) | capitalize }}</h3>
+  <h3 class="sub">{{ part_name(p.part) | capitalize }}</h3>
   <p>{{ t("fb.words") }} {{ p.words_before }} → <strong class="words">{{ p.words }}</strong>{% if p.words > p.limit %} <span class="error">· {{ t("fb.over_limit", limit=p.limit) }}</span>{% endif %}</p>
   {% if p.header_changed %}<p class="error">{{ t("fb.header_changed", name=leader) }}</p>{% endif %}
   <details>

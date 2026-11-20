@@ -7,7 +7,7 @@ import asyncio
 import json
 import time
 import uuid
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from . import company, config, db, i18n
@@ -371,6 +371,15 @@ class Personnel:
         return jid
 
     @staticmethod
+    def playbooks_used(employee: str, since: str) -> list[str]:
+        """The special instructions the employee read in conversations since the meeting "since" (or ever)."""
+        start = datetime.strptime(since, "%Y-%m-%d-%H%M").timestamp() if since else 0
+        with db.connect() as con:
+            return [r["playbook"] for r in con.execute(
+                "SELECT DISTINCT playbook FROM playbook_uses WHERE employee = ? AND used > ? ORDER BY playbook",
+                (employee, start))]
+
+    @staticmethod
     def feedback_leader(employee: str) -> str | None:
         """Who leads the feedback meeting: an HR employee, for HR another one."""
         return company.hr_for(employee)
@@ -396,17 +405,20 @@ class Personnel:
                 (folder / "track-record.md").write_text(record, encoding="utf-8")
                 brief += (f" Read /company/{fbrel}/track-record.md as well: how the owner decided on their proposals. "
                           "That is the most important evidence of their work.")
-            material = company.feedback_material(rel, last)
+            material = company.feedback_material(rel, last, self.playbooks_used(employee, last))
             listed = "".join(f"\n- {what}: " + (", ".join(f"/company/{p}" for p in paths) or "none")
                              for what, paths in (("Transcripts", material["journal"]),
                                                  ("Assignments", material["assignments"]),
-                                                 ("Review reports", material["assessment"])))
+                                                 ("Review reports", material["assessment"]),
+                                                 ("Special instructions used in conversations",
+                                                  material["playbooks"])))
             agreement = config.COMPANY_DIR / rel / company.AGREEMENT
             frame = {"rel": f"employees/{leader}", "procedure": "feedback", "writable": [fbrel], "readable": [rel],
                      "context": f"- It is about: {name}, folder /company/{rel}. Last feedback meeting: "
                                 f"{last or 'none yet'}. You can write in /company/{fbrel}. The core "
                                 f"({company.PROFILE}) has at most {config.PROFILE_WORDS} words, the way of working "
-                                f"({company.WORK}) at most {config.WORK_WORDS}. The human you write the section for: "
+                                f"({company.WORK}) at most {config.WORK_WORDS}, a special instruction "
+                                f"({company.PLAYBOOKS}/<name>.md) at most {config.PLAYBOOK_WORDS}. The human you write the section for: "
                                 f"{company.display_name(company.owner() or '')}."
                                 f"{company.capabilities_of(rel)}"}
             try:

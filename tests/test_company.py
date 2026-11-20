@@ -387,3 +387,63 @@ def test_services_and_token(firm):
                         ("subscription", "sk-ant-api03-test")):
         with pytest.raises(Invalid):
             company.set_token(kind, value)
+
+
+def test_special_instructions_as_own_changes(firm):
+    rel = f"employees/{MILA}"
+    books = firm / rel / company.PLAYBOOKS
+    assert company.playbook_part(" KI-Veranstaltungen & Messen ") == "playbooks/ki-veranstaltungen-messen.md"
+    assert company.playbook_part("Größe") == "playbooks/groesse.md"
+    with pytest.raises(Invalid):
+        company.playbook_part("…")
+    assert company.is_part("playbooks/ai-events.md") and not company.is_part("playbooks/../work.md")
+    # The folder is writable in the own folder, and a new instruction is a change like any other.
+    assert f"{rel}/{company.PLAYBOOKS}" not in company.protected_in_own(rel)
+    snapshot = company.own_snapshot(rel)
+    (books / "ai-events.md").write_text("# For requests about AI events\n\n1. Ask the researcher.\n", encoding="utf-8")
+    (books / "Bad Name.md").write_text("x", encoding="utf-8")
+    (books / "nested").mkdir()
+    (books / "link.md").symlink_to(firm / "handbook.md")
+    change, = company.take_own_change(rel, snapshot)
+    assert (change["part"], change["state"], change["before"]) == ("playbooks/ai-events.md", "applied", "")
+    assert change["limit"] == config.PLAYBOOK_WORDS
+    assert sorted(p.name for p in books.iterdir()) == ["ai-events.md"]
+    assert company.all_parts(rel) == ["profile.md", "work.md", "playbooks/ai-events.md"]
+    # The prompt lists it by its first line only; the procedure itself is read when needed.
+    prompt = company.build_prompt(rel, "conversation", "").read_text(encoding="utf-8")
+    assert f"- /company/{rel}/playbooks/ai-events.md: For requests about AI events" in prompt
+    assert "Ask the researcher" not in prompt
+    # Emptying deletes it; undoing brings it back.
+    snapshot = company.own_snapshot(rel)
+    (books / "ai-events.md").write_text("", encoding="utf-8")
+    change, = company.take_own_change(rel, snapshot)
+    assert change["state"] == "applied" and change["after"] == "" and not (books / "ai-events.md").exists()
+    assert company.replace_text(rel, change["part"], change["after"], change["before"])
+    assert "Ask the researcher" in (books / "ai-events.md").read_text(encoding="utf-8")
+    # Without own changes a new one is only proposed: the file goes away until the human accepts it.
+    company.set_header(rel, {"self_edit": "no"})
+    snapshot = company.own_snapshot(rel)
+    (books / "trips.md").write_text("For travel bookings.\n", encoding="utf-8")
+    change, = company.take_own_change(rel, snapshot)
+    assert change["state"] == "proposed" and not (books / "trips.md").exists()
+    assert company.replace_text(rel, change["part"], change["before"], change["after"])
+    assert (books / "trips.md").is_file()
+    # Too long is not saved.
+    company.set_header(rel, {"self_edit": "yes"})
+    snapshot = company.own_snapshot(rel)
+    (books / "trips.md").write_text("word " * (config.PLAYBOOK_WORDS + 1), encoding="utf-8")
+    change, = company.take_own_change(rel, snapshot)
+    assert change["state"] == "too_long" and (books / "trips.md").read_text(encoding="utf-8") == "For travel bookings.\n"
+
+
+def test_human_creates_and_deletes_a_special_instruction(firm):
+    rel = f"employees/{MILA}"
+    text, version = company.for_editing(rel, "playbooks/ai-events.md")
+    assert text == ""
+    company.edit(rel, "playbooks/ai-events.md", "For AI events.\n\nSteps.", "other", "", OWNER, version)
+    assert company.playbook_parts(rel) == ["playbooks/ai-events.md"]
+    _, version = company.for_editing(rel, "playbooks/ai-events.md")
+    company.edit(rel, "playbooks/ai-events.md", "", "other", "", OWNER, version)
+    assert company.playbook_parts(rel) == [] and company.playbook_index(rel) == ""
+    with pytest.raises(FileNotFoundError):
+        company.for_editing(rel, "playbooks/other/x.md")

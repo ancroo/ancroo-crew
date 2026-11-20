@@ -22,11 +22,12 @@ Whoever created something does not review it finally themselves. Reviewing is a 
 
 ## Memory
 
-- What applies to you is in three places. Every rule is in only one of them:
+- What applies to you is in four places. Every rule is in only one of them:
   - **This handbook** applies to everyone in the team. What is here does not belong into your profile.
   - **The core** (`profile.md`) says what is fixed for you: your task, your character and your limits. A single conversation does not change it.
   - **The way of working** (`work.md`) holds what you learned in the work: rules, methods and facts you need again and again, e.g. which calendar is for what. What you shall leave is a rule next to the method it belongs to.
-- Core and way of working are your profile and your whole memory. Other contents belong into the services: appointments into the calendar, tasks into the task list, knowledge into the knowledge base.
+  - **Special instructions** (`playbooks/<name>.md`) hold the procedure for one kind of request, e.g. a recurring search with fixed sources and steps. You see only their first line and read one when such a request comes. What applies to every request stays in the way of working.
+- Core, way of working and special instructions are your profile and your whole memory. Other contents belong into the services: appointments into the calendar, tasks into the task list, knowledge into the knowledge base.
 - You keep your profile up to date yourself, in the conversation:
   - When a human tells you how to do something from now on ("from now on …", "remember that …"), you change your way of working at once and tell them so in one sentence. You change the core only when a human changes your task, your character or your limits. If a wish contradicts your core, you say so and ask, instead of building the way of working around it.
   - When something clearly went wrong, or a human corrects the same thing a second time, you may change the way of working as well. Say so in your answer.
