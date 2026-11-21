@@ -32,10 +32,78 @@ Without services, employees work only with the files of the company and, if allo
 
 The employees' memory is their profile; everything else they need again, such as notes or tasks, belongs in a service.
 
-1. Run the MCP server as a container of its own on the same server, set up as its own README says.
-2. Attach it to the network of the runs, `COMPANY_NETWORK` (default `<NAME>-agents`), e.g. with `docker network connect company-agents my-mcp`. Only the MCP services and the runs are in this network.
-3. On the page "Services", add it with its container name as the address, e.g. `http://my-mcp:8000/mcp`, plus the access header if it needs one. Tools nobody should use can be blocked there for everyone.
-4. Give an employee the service on their card ("Change key facts"). A service allows all its tools; `service__tool` allows only that one.
+### How it fits together
+
+Every run is a container in the Docker network of the runs, `<NAME>-agents` (`COMPANY_NETWORK`), which `deploy` creates. An MCP server runs as a container of its own on the same server and joins that network; the runs then reach it by its container name over plain HTTP, e.g. `http://caldav-mcp:8000/caldav-mcp`. It needs no published port, no reverse proxy and no HTTPS for this, because the traffic never leaves the server. Only the MCP services and the runs are in this network; the UI and other containers on the server are not.
+
+On the page "Services" the MCP server gets a name, e.g. `calendar`. Its tools are then called `calendar__list_events` and so on, and that name is what goes into an employee's profile.
+
+### Example: a calendar with caldav-mcp
+
+The example assumes an installation with `NAME=company`, so the network is `company-agents`, and a Nextcloud at `cloud.example.net`. Replace both with your own.
+
+**1. Install the MCP server.** Follow [its README](https://github.com/Stefan-Schmidbauer/caldav-mcp#deployment) up to the point where the image is on the server and the env file `.env.caldav-mcp` is filled in: CalDAV address, user, an app password, and `MCP_AUTH_TOKEN` (`openssl rand -hex 32`). `CALDAV_CALENDARS` limits which calendars it offers at all, e.g. only the work calendar for an assistant. Skip its steps about TLS and the reverse proxy; the employees do not need them.
+
+**2. Put it into the network of the runs, in its compose file.** Change its service definition like this and add the network at the end of the file:
+
+```yaml
+  caldav-mcp:
+    # ... everything else as in the snippet of its README ...
+    environment:
+      - MCP_TRANSPORT=streamable-http
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8000
+      - MCP_PATH=/caldav-mcp
+      - TZ=Europe/Berlin
+      # The runs call it by its container name; without this line every call is refused with 421.
+      - MCP_ALLOWED_HOSTS=caldav-mcp:8000
+    networks:
+      - company-agents
+
+networks:
+  company-agents:
+    external: true
+```
+
+Then start it with `docker compose up -d caldav-mcp`. The network exists after the first `./deploy`; before that, `up` fails with "network company-agents declared as external, but could not be found". Write the network into the compose file rather than using `docker network connect`: a connected network is lost as soon as the container is recreated, e.g. by an update of the MCP server, and the employees silently lose the service. If the published port `127.0.0.1:9153` from the snippet is not used by anything else, you can remove it.
+
+**3. Check that the runs can reach it.** On the server, from a throwaway container in the same network:
+
+```
+docker run --rm --network company-agents curlimages/curl -s \
+  http://caldav-mcp:8000/caldav-mcp -H 'Authorization: Bearer <MCP_AUTH_TOKEN>'
+```
+
+`Bad Request: Missing session ID` is the right answer: network, path, token and host check are in order. `Invalid Host header` means `MCP_ALLOWED_HOSTS` is wrong, `unauthorized` the token, `Could not resolve host` the network.
+
+**4. Add it on the page "Services".**
+
+| Field | Value |
+|---|---|
+| Name | `calendar` (letters, digits, `-` and `_`; no `__`) |
+| Type | `http` (streamable HTTP; `sse` only for older servers that speak nothing else) |
+| Address | `http://caldav-mcp:8000/caldav-mcp` |
+| Description | e.g. "Calendar of the company in Nextcloud: read, enter, move and delete appointments". HR reads it in the hiring interview to decide who needs the service. |
+| Tools blocked for everyone | e.g. `delete_event`, if no employee should ever delete an appointment |
+| Header for the access | `Authorization` |
+| Value of the header | `Bearer <MCP_AUTH_TOKEN>`, the word `Bearer`, a space and the token |
+
+The header value is stored with mode 600 and never shown again; to change the service later, leave it empty and the stored one stays.
+
+**5. Give it to an employee.** On their card, "Change key facts", field "Services": `calendar` allows all its tools. To allow only some, list them instead, e.g. `calendar__list_events, calendar__search_events` for someone who may only read. If the employee later needs a tool they do not have, an approval request appears in the chat and on their card; "Approve" adds it.
+
+**6. Try it.** Ask the employee in the chat "What is on my calendar tomorrow?". The tool log above the answer should list `mcp__calendar__list_events`. The sandbox view (switch it on in "Settings") shows which services a run has and which tools are blocked.
+
+### When it does not work
+
+| What you see | Cause and fix |
+|---|---|
+| The employee says they have no calendar, and the tool log shows no call to it | The service is not in the field "Services" on their card, or the run cannot connect to it (network, host check, token or path): check with step 3; `docker logs caldav-mcp` has the details. |
+| A conversation does not start: "There is no service “calendar”." | The name on the card differs from the name on the page "Services". |
+| It worked until the MCP server was updated | The container was recreated and lost a network that had been connected by hand; put the network into its compose file (step 2). |
+| `Cannot connect to the CalDAV server` | The MCP server reaches the service but not the CalDAV server: address, user or app password in its env file. |
+
+Other MCP servers are set up the same way: container in the network of the runs, the container name as address, the access header if the server has one. Whatever a service returns, the employee reads as text, including appointments or notes written by others; see [Security](security.md) for what that means and why blocking dangerous tools is worth it.
 
 ## Backups
 

@@ -53,7 +53,7 @@ The split is deliberate: whoever can change your data cannot read the web, and w
 - **A Linux server with Docker and the Docker Compose plugin**, reachable over SSH with a key or an SSH certificate. The SSH user must be in the group `docker`. To reach the UI through an SSH tunnel, the SSH server must allow local port forwarding (`AllowTcpForwarding`); otherwise put a reverse proxy of your own in front (see [Install](#install)).
 - **Memory and disk.** The service itself needs about 60 MB of RAM; `deploy` limits it to 512 MB and one CPU. Each run is a container of its own, limited by `COMPANY_RUN_MEMORY` (768 MB in the example settings), and runs of different employees can happen at the same time. The images take about 1 GB of disk, plus older ones kept for rollback. A VPS with 2 vCPUs and 4 GB RAM runs two installations side by side.
 - **On your machine:** a checkout of this repository, `git` and `ssh`. Nothing else is installed locally.
-- **Optional: MCP services.** [MCP](https://modelcontextprotocol.io) servers give employees tools such as a calendar or a task list. They run as containers of their own on the same server.
+- **Optional: MCP services.** [MCP](https://modelcontextprotocol.io) servers give employees tools such as a calendar or a task list. They run as containers of their own on the same server. Step by step, with a calendar as the example: [Services for the employees](docs/operation.md#services-for-the-employees).
 
 There is exactly one supported way to install and update: `./deploy`, run from your checkout. Nothing on the server is edited by hand.
 
@@ -77,7 +77,7 @@ With a VPN that serves HTTPS, or with a reverse proxy, pass the `Host` header th
 ## First steps
 
 1. **Setup.** The first page asks for the language, the name of the company, and the owner's name, display name and password. The handbook is created from a preset.
-2. **Services.** The page "Services" opens next. Enter the Claude token there. MCP services can be added now or later.
+2. **Services.** The page "Services" opens next. Enter the Claude token there. MCP services can be added now or later ([how](docs/operation.md#services-for-the-employees)).
 3. **Hire from a preset.** An empty company starts with HR: "Hire from a preset", then HR. Next come a reviewer and an archivist, and then whoever does the actual work. The presets cover HR, a reviewer, the archivist, a researcher and an assistant; everyone else, e.g. a Trilium expert, you hire through the hiring interview.
 4. **Talk to them.** Open the chat from an employee's card. When something is not how you want it, say how it should be done from now on. The employee changes their own profile, and you see the change with an "Undo" button.
 5. **Hire for a real need.** Once HR is in place, "Hiring interview" lets HR find out what you need and write a draft profile, which you hire from its card.
