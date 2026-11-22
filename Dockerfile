@@ -1,5 +1,5 @@
 # The web UI. It starts the runs through the Docker socket of the host, so it needs the Docker CLI but no daemon.
-FROM docker:29.9.2-cli AS docker
+FROM docker:29.9.3-cli AS docker
 
 FROM python:3.12-slim
 
