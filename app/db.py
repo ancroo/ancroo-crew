@@ -1,4 +1,5 @@
 """SQLite for the operational data. What defines someone stays in files in the company's Git repository."""
+import secrets
 import sqlite3
 import time
 from contextlib import contextmanager
@@ -195,12 +196,19 @@ def setup(version: int = SCHEMA_VERSION) -> None:
                                           ("schedules", "paused", "INTEGER NOT NULL DEFAULT 0")):
             if column not in {r["name"] for r in con.execute(f"PRAGMA table_info({table})")}:
                 con.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+        con.execute("INSERT OR IGNORE INTO meta (key, value) VALUES ('installation', ?)", (secrets.token_hex(4),))
         row = con.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
         if row is None:
             con.execute("INSERT INTO meta (key, value) VALUES ('schema_version', ?)", (str(version),))
         elif row["value"] != str(version):
             raise SchemaMismatch(f"The database {config.DATABASE} has schema version {row['value']}, "
                                  f"expected {version}.")
+
+
+def installation() -> str:
+    """A random ID of this database, made by setup(). It tells installations apart that share a host."""
+    with connect() as con:
+        return con.execute("SELECT value FROM meta WHERE key = 'installation'").fetchone()["value"]
 
 
 def add_person(person_id: str) -> None:

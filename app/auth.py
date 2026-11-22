@@ -12,8 +12,17 @@ import time
 from . import company, config, db
 from .errors import Invalid
 
-COOKIE = "company_session"
 MIN_LENGTH = 10
+_cookies: dict = {}
+
+
+def cookie() -> str:
+    """The name of the login cookie, one per installation. A browser sends a cookie to every port of its host, so with
+    one name for all, two installations on one host (e.g. on two ports behind the same TLS proxy) would log each other
+    out."""
+    if config.DATABASE not in _cookies:
+        _cookies[config.DATABASE] = f"company_session_{db.installation()}"
+    return _cookies[config.DATABASE]
 
 
 def _hash(password: str, salt: bytes) -> str:

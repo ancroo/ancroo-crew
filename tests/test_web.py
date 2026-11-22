@@ -48,7 +48,7 @@ def test_first_start_is_the_setup(tmp_path, monkeypatch):
         assert client.post("/setup", json=data).status_code == 409
         data["password"] = PASSWORD
         answer = client.post("/setup", json=data)
-        assert answer.status_code == 200 and auth.COOKIE in answer.cookies
+        assert answer.status_code == 200 and auth.cookie() in answer.cookies
         assert client.post("/setup", json=data).status_code == 409
         # The owner is logged in at once and sees the UI in German.
         team = client.get("/", headers=HTML).text
@@ -76,10 +76,10 @@ def test_login(firm):
             logged_in = client.post("/login", json={"name": name, "password": PASSWORD})
             assert logged_in.status_code == 200 and "secure" not in logged_in.headers["set-cookie"].lower()
         assert "Log out" in client.get("/", headers=HTML).text
-        assert auth.person(client.cookies[auth.COOKIE]) == OWNER
+        assert auth.person(client.cookies[auth.cookie()]) == OWNER
         with db.connect() as con:
             stored = con.execute("SELECT token FROM sessions").fetchone()["token"]
-            assert stored != client.cookies[auth.COOKIE] and PASSWORD not in con.execute(
+            assert stored != client.cookies[auth.cookie()] and PASSWORD not in con.execute(
                 "SELECT password FROM people WHERE id = ?", (OWNER,)).fetchone()["password"]
         assert client.post("/logout").status_code == 200
         assert client.get("/", headers=HTML).status_code == 303
@@ -91,6 +91,16 @@ def test_login_cookie_only_over_https(firm, monkeypatch):
     with TestClient(main.app, follow_redirects=False) as client:
         answer = client.post("/login", json={"name": "Paul", "password": PASSWORD})
         assert answer.status_code == 200 and "secure" in answer.headers["set-cookie"].lower()
+
+
+def test_two_installations_on_one_host_keep_their_logins(firm, tmp_path, monkeypatch):
+    """A browser sends cookies to every port of a host; prod and demo on two ports need two cookie names."""
+    name, installation = auth.cookie(), db.installation()
+    db.setup()  # a restart keeps the name, so logins survive an update
+    assert db.installation() == installation and name == f"company_session_{installation}"
+    monkeypatch.setattr(config, "DATABASE", tmp_path / "other.db")
+    db.setup()
+    assert auth.cookie() != name
 
 
 def test_foreign_sites_and_redirects(office):

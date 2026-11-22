@@ -189,6 +189,7 @@ The app is the same page as in the browser: it needs the connection (on with Tai
 
 - Every human logs in with their name or display name and a password. Before the setup, only the setup page is reachable; afterwards, only the login page.
 - Passwords are stored as scrypt hashes; of the login cookie, only a SHA-256 hash is stored.
+- Each installation names its login cookie after a random ID in its database. Two installations on one host, such as two ports behind the same proxy, can therefore be used side by side in one browser.
 - A forgotten password is reset with `./deploy --reset-password`.
 - The UI accepts requests that change something (everything except `GET`) only from its own pages. Otherwise any web page open in the same browser could approve tools or dismiss employees with your cookie. The check uses the header `Sec-Fetch-Site`, and on older browsers compares `Origin` with `Host`. A proxy in front must pass `Host` through unchanged. Scripts that send neither header, such as `curl`, are not affected.
 - After login, the UI redirects only to its own pages, never to an outside address from `?next=`.

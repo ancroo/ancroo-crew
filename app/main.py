@@ -205,7 +205,7 @@ async def check_login(request: Request, call_next):
     if request.method not in ("GET", "HEAD", "OPTIONS") and not path.startswith("/channel/") and _foreign_site(request):
         return JSONResponse({"detail": i18n.t(i18n.from_header(request.headers.get("accept-language")),
                                               "err.foreign_site")}, 403)
-    request.state.person = auth.person(request.cookies.get(auth.COOKIE))
+    request.state.person = auth.person(request.cookies.get(auth.cookie()))
     if path.startswith("/static/"):
         return await call_next(request)
     wants_html = request.method == "GET" and "text/html" in request.headers.get("accept", "")
@@ -294,7 +294,7 @@ def set_up(request: Request, company_name: str = Body(embed=True), language: str
     company.commit("Setup: company and owner")
     token = auth.log_in(name, password)
     response = JSONResponse({"ok": True})
-    response.set_cookie(auth.COOKIE, token, max_age=config.LOGIN_DAYS * 86400, httponly=True, samesite="lax",
+    response.set_cookie(auth.cookie(), token, max_age=config.LOGIN_DAYS * 86400, httponly=True, samesite="lax",
                         secure=config.COOKIE_SECURE)
     return response
 
@@ -878,16 +878,16 @@ async def log_in(request: Request, name: str = Body(embed=True), password: str =
         await asyncio.sleep(1)  # slows down guessing
         raise HTTPException(401, i18n.t(lang_of(request), "err.login_failed"))
     response = JSONResponse({"ok": True})
-    response.set_cookie(auth.COOKIE, token, max_age=config.LOGIN_DAYS * 86400, httponly=True, samesite="lax",
+    response.set_cookie(auth.cookie(), token, max_age=config.LOGIN_DAYS * 86400, httponly=True, samesite="lax",
                         secure=config.COOKIE_SECURE)
     return response
 
 
 @app.post("/logout")
 def log_out(request: Request):
-    auth.log_out(request.cookies.get(auth.COOKIE))
+    auth.log_out(request.cookies.get(auth.cookie()))
     response = JSONResponse({"ok": True})
-    response.delete_cookie(auth.COOKIE)
+    response.delete_cookie(auth.cookie())
     return response
 
 
